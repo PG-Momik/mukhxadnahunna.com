@@ -18,43 +18,21 @@ the table and nav on the landing page.
 
 ## Hero video
 
-The landing page hero shows a video of a form submission being blocked. Until one is added, it shows a static
-mock of the same scene.
+The landing page hero plays two recordings of the demo apps in `../demo`, one after the other: a course review
+being blocked, then a reply being censored. Tabs under the video show which is playing and switch between them.
 
-**Recording**
+To replace them:
 
-- Record at **16:10**, e.g. 2560×1600 or 1920×1200. The frame is 16:10, and the video is cropped to fill it.
-- Keep it short (6 to 12 seconds) and make it loop cleanly: end on the same frame it starts on.
-- There's no sound: the video autoplays muted.
-- Use a clean browser window with no bookmarks bar or extensions, and zoom in (125 to 150%) so text is readable
-  at the size it's shown on the page.
+1. Record the demos (see `demo/README.md`).
+2. Save the recordings in this folder as `comment-blocked.mov` and `comment-censored.mov`. Raw `.mov` files here are
+   git-ignored.
+3. Run `./scripts/encode-hero-videos.sh`. It writes an MP4, a WebM and a poster image for each into
+   `docs/.vitepress/theme/media/`, holding the last frame for 1.5 seconds so the result can be read. The landing
+   page imports them from there, so each build gives them content-hashed file names and a new recording always
+   gets a new URL.
 
-**Encoding**
-
-```sh
-# MP4 (H.264): plays everywhere. Aim for 2 to 4 MB.
-ffmpeg -i raw.mov -vf "scale=1920:1200:flags=lanczos,fps=30" -c:v libx264 -preset slow -crf 22 \
-  -pix_fmt yuv420p -movflags +faststart -an docs/public/media/hero.mp4
-
-# WebM (VP9): smaller, used by browsers that support it.
-ffmpeg -i raw.mov -vf "scale=1920:1200:flags=lanczos,fps=30" -c:v libvpx-vp9 -crf 34 -b:v 0 -an \
-  docs/public/media/hero.webm
-
-# Poster: the first frame, shown while the video loads.
-ffmpeg -i docs/public/media/hero.mp4 -frames:v 1 -q:v 3 docs/public/media/hero-poster.jpg
-```
-
-Then set the paths at the top of `docs/.vitepress/theme/components/Landing.vue`:
-
-```ts
-const HERO_VIDEO = {
-  mp4: "/media/hero.mp4",
-  webm: "/media/hero.webm",
-  poster: "/media/hero-poster.jpg",
-};
-```
-
-Visitors who have reduced motion turned on get a paused video with controls instead of autoplay.
+The labels and captions are in `HERO_VIDEOS` at the top of `docs/.vitepress/theme/components/Landing.vue`. Visitors
+who have reduced motion turned on get paused videos with controls instead of autoplay.
 
 ## Local development
 

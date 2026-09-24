@@ -8,7 +8,7 @@ Nepal.
 import { censor, check, containsProfanity, findProfanity } from "no-nepali-profanity";
 
 containsProfanity("Great teacher!");    // false
-containsProfanity("मुजीको कक्षा");       // true
+containsProfanity("मुजीको क्लास");       // true
 findProfanity("f.u.c.k this sh1t");     // ["fuck", "shit"]
 censor("you muji");                     // "you ****"
 check("you muji").censor();             // "you ****"

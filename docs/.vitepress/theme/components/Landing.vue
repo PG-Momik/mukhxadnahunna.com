@@ -1,17 +1,69 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+// Imported rather than served from public/, so each build names them by content: a new recording gets a new URL,
+// and browsers and caches can't keep serving an old one.
+import blockedMp4 from "../media/comment-blocked.mp4";
+import blockedWebm from "../media/comment-blocked.webm";
+import blockedPoster from "../media/comment-blocked-poster.jpg";
+import censoredMp4 from "../media/comment-censored.mp4";
+import censoredWebm from "../media/comment-censored.webm";
+import censoredPoster from "../media/comment-censored-poster.jpg";
 
 const GITHUB = "https://github.com/PG-Momik/no-nepali-profanity";
 
 /*
- * Hero video. Put the files in docs/public/media/ and set the paths here, e.g. "/media/hero.mp4". While `mp4` is
- * empty, the hero shows a static mock of the same scene instead.
+ * Hero videos, recorded from the demo apps and encoded into ../media/ (see "Hero video" in the README). They play
+ * one after the other on a loop; the tabs under the frame show which one is playing and switch between them.
  */
-const HERO_VIDEO = {
-  mp4: "",
-  webm: "",
-  poster: "",
-};
+const HERO_VIDEOS = [
+  {
+    name: "comment-blocked",
+    label: "Blocks it",
+    caption: "Use it as form validation: reject abusive input before it's submitted.",
+    mp4: blockedMp4,
+    webm: blockedWebm,
+    poster: blockedPoster,
+  },
+  {
+    name: "comment-censored",
+    label: "Censors it",
+    caption: "Or censor on the client: mask the abuse and let the post through.",
+    mp4: censoredMp4,
+    webm: censoredWebm,
+    poster: censoredPoster,
+  },
+];
+
+const activeVideo = ref(0);
+const videoProgress = ref(0);
+const videoEls: HTMLVideoElement[] = [];
+let reducedMotion = false;
+let progressFrame = 0;
+
+function setVideoEl(el: unknown, i: number) {
+  if (el instanceof HTMLVideoElement) videoEls[i] = el;
+}
+
+function showVideo(i: number) {
+  activeVideo.value = i;
+  videoProgress.value = 0;
+  videoEls.forEach((el, j) => {
+    if (j !== i) return el.pause();
+    el.currentTime = 0;
+    if (!reducedMotion) el.play().catch(() => {});
+  });
+}
+
+function onVideoEnded(i: number) {
+  if (i === activeVideo.value) showVideo((i + 1) % HERO_VIDEOS.length);
+}
+
+// Smooth progress for the active tab's bar; timeupdate alone only fires a few times a second.
+function trackProgress() {
+  const el = videoEls[activeVideo.value];
+  if (el && el.duration) videoProgress.value = el.currentTime / el.duration;
+  progressFrame = requestAnimationFrame(trackProgress);
+}
 
 /*
  * Install commands for each port, shown on the faces of a rolling cube, with a note underneath that follows the
@@ -34,14 +86,12 @@ const noteFace = ref(0);
 const rollPaused = ref(false);
 let rollTimer: ReturnType<typeof setInterval> | undefined;
 
-const heroVideo = ref<HTMLVideoElement | null>(null);
 onMounted(() => {
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // Respect reduced motion: don't autoplay, and give the viewer controls instead.
-  if (heroVideo.value && reducedMotion) {
-    heroVideo.value.pause();
-    heroVideo.value.controls = true;
-  }
+  if (reducedMotion) videoEls.forEach((el) => (el.controls = true));
+  showVideo(0);
+  trackProgress();
   // Under reduced motion the cube stays on npm.
   if (!reducedMotion) {
     rollTimer = setInterval(() => {
@@ -51,7 +101,10 @@ onMounted(() => {
     }, ROLL_EVERY_MS);
   }
 });
-onBeforeUnmount(() => clearInterval(rollTimer));
+onBeforeUnmount(() => {
+  clearInterval(rollTimer);
+  cancelAnimationFrame(progressFrame);
+});
 
 const copied = ref(false);
 async function copyInstall() {
@@ -71,9 +124,24 @@ async function copyInstall() {
 type Segment = { t: string; m?: string };
 const samples: { label: string; segments: Segment[]; words: string[] }[] = [
   {
+    label: "Romanized Nepali",
+    segments: [{ t: "yo " }, { t: "khatey", m: "******" }, { t: " payment app kahiley chaley po" }],
+    words: ["khatey"],
+  },
+  {
+    label: "Devanagari",
+    segments: [{ t: "मुजीको", m: "***" }, { t: " क्लास, कहिल्यै नआउनु" }],
+    words: ["मुजीको"],
+  },
+  {
     label: "English, leetspeak",
     segments: [{ t: "Great lecture, but the lab was " }, { t: "sh1t", m: "****" }, { t: "." }],
     words: ["shit"],
+  },
+  {
+    label: "Symbols",
+    segments: [{ t: "this restro is " }, { t: "@ss", m: "***" }],
+    words: ["ass"],
   },
   {
     label: "Spelled out",
@@ -81,28 +149,8 @@ const samples: { label: string; segments: Segment[]; words: string[] }[] = [
     words: ["fuck"],
   },
   {
-    label: "Devanagari",
-    segments: [{ t: "मुजीको", m: "***" }, { t: " कक्षा, कहिल्यै नआउनु" }],
-    words: ["मुजीको"],
-  },
-  {
-    label: "Romanized Nepali",
-    segments: [{ t: "yo exam ta " }, { t: "muji jasto", m: "**** *****" }, { t: " thiyo" }],
-    words: ["muji", "muji jasto"],
-  },
-  {
-    label: "Nepali phrase",
-    segments: [{ t: "sasto manche", m: "***** ******" }, { t: " jasto kura nagara" }],
-    words: ["sasto manche"],
-  },
-  {
     label: "A real name",
     segments: [{ t: "Randip Thapa explained it really well" }],
-    words: [],
-  },
-  {
-    label: "Another name",
-    segments: [{ t: "Shitij sir ko class ramro thiyo" }],
     words: [],
   },
 ];
@@ -122,7 +170,7 @@ const snippets = [
 
 censor("you muji");  // "you ****"
 censor("F.U.C.K this Sh1t!");  // "******* this ****!"
-censor("मुजीको कक्षा");  // "*** कक्षा"`,
+censor("मुजीको क्लास");  // "*** क्लास"`,
   },
   {
     label: "Check and censor",
@@ -163,7 +211,7 @@ function highlight(code: string): string {
 }
 
 const dodges = ["sh1t", "sh!t", "f*ck", "fuuuuck", "f.u.c.k", "ＦＵＣＫ"];
-const grammar = ["mujiko", "randiharu", "मुजीको", "मुजीहरू"];
+const grammar = ["mujiko", "gedaharu", "मुजीको", "गेडाहरू"];
 const names = ["Shitij", "Kshitij", "Randip", "Kandel", "Putali", "Asha"];
 
 const levels = [
@@ -190,8 +238,8 @@ const ports = [
         <p class="eyebrow">Open source · MIT licensed</p>
         <h1 class="hero-title">Profanity filtering <br />that understands Nepali.</h1>
         <p class="hero-sub">
-          Detect and censor abuse in English, Romanized Nepali and Devanagari. Built to catch the dodges, and to
-          leave your users' real names alone.
+          Detect and censor abuse in English, Romanized Nepali and Devanagari. It sees through disguised spellings
+          like sh1t and m.u.j.i, and won't flag real names like Shitij.
         </p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="/js/">Get started</a>
@@ -232,43 +280,43 @@ const ports = [
         </div>
 
         <div class="hero-media">
-          <video
-            v-if="HERO_VIDEO.mp4"
-            ref="heroVideo"
-            class="hero-video"
-            autoplay
-            muted
-            loop
-            playsinline
-            preload="metadata"
-            :poster="HERO_VIDEO.poster || undefined"
-            aria-label="A review form rejecting a comment that contains profanity"
-          >
-            <source v-if="HERO_VIDEO.webm" :src="HERO_VIDEO.webm" type="video/webm" />
-            <source :src="HERO_VIDEO.mp4" type="video/mp4" />
-          </video>
+          <div class="hero-screen">
+            <video
+              v-for="(v, i) in HERO_VIDEOS"
+              :key="v.name"
+              :ref="(el) => setVideoEl(el, i)"
+              class="hero-video"
+              :class="{ 'is-active': activeVideo === i }"
+              muted
+              playsinline
+              preload="auto"
+              :poster="v.poster"
+              :aria-hidden="activeVideo !== i"
+              :aria-label="v.caption"
+              @ended="onVideoEnded(i)"
+            >
+              <source :src="v.webm" type="video/webm" />
+              <source :src="v.mp4" type="video/mp4" />
+            </video>
+          </div>
 
-          <!-- Placeholder until the video is recorded: the same scene, static -->
-          <div v-else class="mock" role="img" aria-label="A review form rejecting a comment that contains profanity">
-            <div class="mock-chrome">
-              <span class="mock-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span class="mock-url">yourapp.com/courses/cs101/reviews</span>
-            </div>
-            <div class="mock-page">
-              <p class="mock-kicker">CS101 · Data Structures</p>
-              <p class="mock-title">Write a review</p>
-              <p class="mock-field-label">Your review</p>
-              <div class="mock-field is-error">
-                Lecturer ta <span class="mock-hit">muji jasto</span> cha
-              </div>
-              <p class="mock-error">
-                <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" /><path d="M8 4.5v4M8 11h.01" /></svg>
-                Your review contains language that isn't allowed.
-              </p>
-              <div class="mock-actions">
-                <span class="mock-btn is-disabled">Post review</span>
-              </div>
-            </div>
+          <div class="hero-tabs" role="tablist" aria-label="Demo videos">
+            <button
+              v-for="(v, i) in HERO_VIDEOS"
+              :key="v.name"
+              type="button"
+              role="tab"
+              class="hero-tab"
+              :class="{ 'is-active': activeVideo === i }"
+              :aria-selected="activeVideo === i"
+              @click="showVideo(i)"
+            >
+              <span class="hero-tab-track" aria-hidden="true">
+                <span :style="{ transform: `scaleX(${activeVideo === i ? videoProgress : 0})` }"></span>
+              </span>
+              <span class="hero-tab-label">{{ v.label }}</span>
+              <span class="hero-tab-caption">{{ v.caption }}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -513,7 +561,7 @@ const ports = [
   max-width: 1080px;
 }
 .wrap-hero {
-  max-width: 1200px;
+  max-width: 1320px;
 }
 
 /* Hero */
@@ -522,8 +570,9 @@ const ports = [
 }
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 64px;
+  /* The text column only needs to fit the longest install command; the video gets the rest */
+  grid-template-columns: minmax(0, 540px) minmax(0, 1fr);
+  gap: 56px;
   align-items: center;
 }
 .eyebrow {
@@ -690,141 +739,75 @@ button:focus-visible,
   color: var(--mx-text-3);
 }
 
-/* Hero media: the video, or the mock that stands in for it */
+/* Hero media: the demo videos, cross-fading from one to the next, with tabs underneath */
 .hero-media {
   position: relative;
 }
-.hero-video,
-.mock {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  border-radius: 20px;
+.hero-screen {
+  position: relative;
+  aspect-ratio: 1920 / 1210;
+  border-radius: 12px;
   border: 1px solid var(--mx-hairline);
   background: var(--mx-card);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 60px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 .hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.45s ease;
 }
-/* No overflow: hidden here, so the frame can grow past 16:10 when its content needs the room */
-.mock {
+.hero-video.is-active {
+  opacity: 1;
+}
+.hero-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+.hero-tab {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   text-align: left;
+  color: var(--mx-text-3);
+  transition: color 0.2s ease;
 }
-.mock-chrome {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  height: 40px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--mx-hairline);
-  border-radius: 19px 19px 0 0;
-  background: var(--mx-bg-alt);
-  flex-shrink: 0;
+.hero-tab:hover,
+.hero-tab.is-active {
+  color: var(--mx-text);
 }
-.mock-dots {
-  display: flex;
-  gap: 6px;
-}
-.mock-dots i {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.hero-tab-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 2px;
+  margin-bottom: 10px;
+  border-radius: 1px;
   background: var(--mx-hairline);
-}
-.mock-url {
-  flex: 1;
-  max-width: 320px;
-  margin: 0 auto;
-  padding: 4px 12px;
-  border-radius: 7px;
-  background: var(--mx-card);
-  font-size: 12px;
-  color: var(--mx-text-3);
-  text-align: center;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
-.mock-page {
-  flex: 1;
-  padding: 20px 36px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+.hero-tab-track span {
+  position: absolute;
+  inset: 0;
+  background: var(--mx-text);
+  transform-origin: left;
+  transform: scaleX(0);
 }
-.mock-kicker {
-  margin: 0;
-  font-size: 13px;
-  color: var(--mx-text-3);
-}
-.mock-title {
-  margin: 2px 0 16px;
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-}
-.mock-field-label {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--mx-text-2);
-}
-.mock-field {
-  min-height: 64px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--mx-hairline);
-  font-size: 16px;
-  line-height: 1.5;
-}
-.mock-field.is-error {
-  border-color: var(--mx-crimson);
-  box-shadow: 0 0 0 3px var(--mx-crimson-soft);
-}
-.mock-hit {
-  color: var(--mx-crimson);
-  text-decoration: underline wavy var(--mx-crimson);
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1px;
-}
-.mock-error {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 12px 0 0;
-  font-size: 14px;
-  color: var(--mx-crimson);
-}
-.mock-error svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-}
-.mock-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-.mock-btn {
-  display: inline-flex;
-  align-items: center;
-  height: 38px;
-  padding: 0 18px;
-  border-radius: 980px;
+.hero-tab-label {
   font-size: 15px;
-  font-weight: 500;
-  background: var(--vp-button-brand-bg);
-  color: #fff;
+  font-weight: 600;
 }
-.mock-btn.is-disabled {
-  opacity: 0.35;
+.hero-tab-caption {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--mx-text-2);
 }
 
 /* Demo */
@@ -1317,8 +1300,8 @@ button:focus-visible,
   font-size: 13px;
 }
 
-/* Stack the hero once the text column gets too narrow for the longest install command */
-@media (max-width: 1100px) {
+/* Stack the hero before the video gets smaller than it would be stacked */
+@media (max-width: 1180px) {
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 56px;
@@ -1327,7 +1310,7 @@ button:focus-visible,
     max-width: 620px;
   }
   .hero-media {
-    max-width: 720px;
+    max-width: 880px;
   }
 }
 
@@ -1349,18 +1332,8 @@ button:focus-visible,
   .hero-grid {
     gap: 40px;
   }
-  .mock {
-    aspect-ratio: auto;
-  }
-  .mock-page {
-    padding: 24px 20px;
-  }
-  .mock-field {
-    min-height: 84px;
-  }
-  .mock-title {
-    font-size: 20px;
-    margin-bottom: 18px;
+  .hero-tabs {
+    gap: 14px;
   }
   .hero-title br {
     display: none;

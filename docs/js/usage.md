@@ -9,7 +9,7 @@ import { containsProfanity } from "no-nepali-profanity";
 
 containsProfanity("Great teacher!");   // false
 containsProfanity("muji");             // true
-containsProfanity("मुजीको कक्षा");      // true (Devanagari with a postposition)
+containsProfanity("मुजीको क्लास");      // true (Devanagari with a postposition)
 containsProfanity("sh!t lecturer");    // true (! used as i)
 ```
 

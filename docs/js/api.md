@@ -140,7 +140,7 @@ Each result is the token **after normalization**, not the dictionary word it mat
 ```js
 findProfanity("f.u.c.k this sh1t");    // ["fuck", "shit"]
 findProfanity("fuuuuck");              // ["fuuuuck"]
-findProfanity("randiharu");            // ["randiharu"]
+findProfanity("gedaharu");             // ["gedaharu"]
 findProfanity("मु‍जी");                 // ["मुजी"] (zero-width joiner removed)
 findProfanity("p3sa g@rne taba");      // ["pesa garne"]
 findProfanity("chaak ko pwal");        // ["chaak", "chaak ko pwal"]

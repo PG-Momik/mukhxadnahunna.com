@@ -8,7 +8,7 @@ import { censor } from "no-nepali-profanity";
 
 censor("you muji");                  // "you ****"
 censor("F.U.C.K this Sh1t!");        // "******* this ****!"
-censor("मुजीको कक्षा");               // "*** कक्षा"
+censor("मुजीको क्लास");               // "*** क्लास"
 censor("Great teacher!");            // "Great teacher!"
 ```
 
