@@ -13,7 +13,17 @@ export default defineConfig({
   sitemap: { hostname: "https://mukhxadnahunna.com" },
 
   head: [
-    ["meta", { name: "theme-color", content: "#b91c1c" }],
+    ["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
+    ["link", { rel: "preconnect", href: "https://fonts.googleapis.com" }],
+    ["link", { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" }],
+    [
+      "link",
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap",
+      },
+    ],
+    ["meta", { name: "theme-color", content: "#ffffff" }],
     ["meta", { property: "og:type", content: "website" }],
     ["meta", { property: "og:title", content: "mukhxadnahunna" }],
     [
@@ -26,17 +36,13 @@ export default defineConfig({
   ],
 
   themeConfig: {
+    logo: { src: "/logo.svg", alt: "" },
+
     nav: [
-      { text: "Home", link: "/" },
-      {
-        text: "Ports",
-        items: [
-          { text: "JavaScript / TypeScript", link: "/js/" },
-          { text: "PHP / Laravel (planned)", link: "/#ports" },
-          { text: "Python (planned)", link: "/#ports" },
-          { text: "Go (planned)", link: "/#ports" },
-        ],
-      },
+      { text: "Docs", link: "/js/", activeMatch: "^/js/(?!api|examples|changelog)" },
+      { text: "Examples", link: "/js/examples" },
+      { text: "API", link: "/js/api" },
+      { text: "Changelog", link: "/js/changelog" },
     ],
 
     sidebar: {

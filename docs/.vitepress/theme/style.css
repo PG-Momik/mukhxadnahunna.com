@@ -1,0 +1,104 @@
+/*
+ * Site-wide design tokens. The system font comes first so Apple devices get SF Pro; Inter and Noto Sans Devanagari
+ * (loaded from Google Fonts in config.mts) cover everything else.
+ */
+:root {
+  --vp-font-family-base: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto,
+    "Noto Sans Devanagari", "Kohinoor Devanagari", sans-serif;
+  --vp-font-family-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* Neutrals */
+  --mx-bg: #ffffff;
+  --mx-bg-alt: #f5f5f7;
+  --mx-text: #1d1d1f;
+  --mx-text-2: #6e6e73;
+  --mx-text-3: #86868b;
+  --mx-hairline: rgba(0, 0, 0, 0.08);
+  --mx-card: #ffffff;
+
+  /* Accents, from the flag of Nepal */
+  --mx-blue: #003893;
+  --mx-blue-hover: #002a70;
+  --mx-crimson: #dc143c;
+  --mx-crimson-soft: rgba(220, 20, 60, 0.1);
+  --mx-green: #1e7d45;
+
+  --vp-c-brand-1: var(--mx-blue);
+  --vp-c-brand-2: #1f52a8;
+  --vp-c-brand-3: var(--mx-blue);
+  --vp-c-brand-soft: rgba(0, 56, 147, 0.1);
+
+  --vp-button-brand-bg: var(--mx-blue);
+  --vp-button-brand-hover-bg: var(--mx-blue-hover);
+  --vp-button-brand-active-bg: var(--mx-blue-hover);
+
+  --vp-c-bg-alt: var(--mx-bg-alt);
+  --vp-c-text-1: var(--mx-text);
+  --vp-c-text-2: var(--mx-text-2);
+}
+
+.dark {
+  --mx-bg: #000000;
+  --mx-bg-alt: #111113;
+  --mx-text: #f5f5f7;
+  --mx-text-2: #a1a1a6;
+  --mx-text-3: #86868b;
+  --mx-hairline: rgba(255, 255, 255, 0.1);
+  --mx-card: #1c1c1e;
+
+  --mx-blue: #6f9bff;
+  --mx-blue-hover: #8fb2ff;
+  --mx-crimson: #ff5a74;
+  --mx-crimson-soft: rgba(255, 90, 116, 0.14);
+  --mx-green: #4cc783;
+
+  --vp-c-brand-1: var(--mx-blue);
+  --vp-c-brand-2: var(--mx-blue-hover);
+  --vp-c-brand-3: #3d6fd6;
+  --vp-c-brand-soft: rgba(111, 155, 255, 0.14);
+
+  --vp-button-brand-bg: #3d6fd6;
+  --vp-button-brand-hover-bg: #5582e0;
+  --vp-button-brand-active-bg: #5582e0;
+
+  --vp-c-bg: var(--mx-bg);
+  --vp-c-bg-alt: var(--mx-bg-alt);
+  --vp-c-text-1: var(--mx-text);
+  --vp-c-text-2: var(--mx-text-2);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* A translucent, blurred nav bar, like apple.com */
+.VPNavBar:not(.home.top) {
+  background-color: color-mix(in srgb, var(--vp-c-bg) 80%, transparent) !important;
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+.VPNavBar:not(.home.top) .content-body,
+.VPNavBar:not(.home.top) .divider-line {
+  background-color: transparent !important;
+}
+
+.VPNavBarTitle .title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Documentation pages: slightly tighter headings */
+.vp-doc h1 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.vp-doc h2 {
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  border-top-color: var(--mx-hairline);
+}
+.vp-doc h3 {
+  font-weight: 600;
+}
