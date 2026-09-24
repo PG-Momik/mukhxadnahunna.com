@@ -16,6 +16,46 @@ docs/
 To add a port (for example PHP), create `docs/php/`, add a sidebar entry under `"/php/"` in `config.mts`, and update
 the table and nav on the landing page.
 
+## Hero video
+
+The landing page hero shows a video of a form submission being blocked. Until one is added, it shows a static
+mock of the same scene.
+
+**Recording**
+
+- Record at **16:10**, e.g. 2560×1600 or 1920×1200. The frame is 16:10, and the video is cropped to fill it.
+- Keep it short (6 to 12 seconds) and make it loop cleanly: end on the same frame it starts on.
+- There's no sound: the video autoplays muted.
+- Use a clean browser window with no bookmarks bar or extensions, and zoom in (125 to 150%) so text is readable
+  at the size it's shown on the page.
+
+**Encoding**
+
+```sh
+# MP4 (H.264): plays everywhere. Aim for 2 to 4 MB.
+ffmpeg -i raw.mov -vf "scale=1920:1200:flags=lanczos,fps=30" -c:v libx264 -preset slow -crf 22 \
+  -pix_fmt yuv420p -movflags +faststart -an docs/public/media/hero.mp4
+
+# WebM (VP9): smaller, used by browsers that support it.
+ffmpeg -i raw.mov -vf "scale=1920:1200:flags=lanczos,fps=30" -c:v libvpx-vp9 -crf 34 -b:v 0 -an \
+  docs/public/media/hero.webm
+
+# Poster: the first frame, shown while the video loads.
+ffmpeg -i docs/public/media/hero.mp4 -frames:v 1 -q:v 3 docs/public/media/hero-poster.jpg
+```
+
+Then set the paths at the top of `docs/.vitepress/theme/components/Landing.vue`:
+
+```ts
+const HERO_VIDEO = {
+  mp4: "/media/hero.mp4",
+  webm: "/media/hero.webm",
+  poster: "/media/hero-poster.jpg",
+};
+```
+
+Visitors who have reduced motion turned on get a paused video with controls instead of autoplay.
+
 ## Local development
 
 ```sh

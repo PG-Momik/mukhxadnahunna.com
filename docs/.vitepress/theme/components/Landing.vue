@@ -1,8 +1,27 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const INSTALL = "npm install no-nepali-profanity";
 const GITHUB = "https://github.com/PG-Momik/no-nepali-profanity";
+
+/*
+ * Hero video. Put the files in docs/public/media/ and set the paths here, e.g. "/media/hero.mp4". While `mp4` is
+ * empty, the hero shows a static mock of the same scene instead.
+ */
+const HERO_VIDEO = {
+  mp4: "",
+  webm: "",
+  poster: "",
+};
+
+const heroVideo = ref<HTMLVideoElement | null>(null);
+onMounted(() => {
+  // Respect reduced motion: don't autoplay, and give the viewer controls instead.
+  if (heroVideo.value && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    heroVideo.value.pause();
+    heroVideo.value.controls = true;
+  }
+});
 
 const copied = ref(false);
 async function copyInstall() {
@@ -136,7 +155,8 @@ const ports = [
   <div class="mx">
     <!-- Hero -->
     <section class="hero">
-      <div class="wrap">
+      <div class="wrap wrap-hero hero-grid">
+        <div class="hero-copy">
         <p class="eyebrow">Open source · MIT licensed</p>
         <h1 class="hero-title">Profanity filtering <br />that understands Nepali.</h1>
         <p class="hero-sub">
@@ -157,10 +177,55 @@ const ports = [
           </button>
         </div>
         <p class="install-note">Pre-release. Publishing to npm soon.</p>
-      </div>
+        </div>
 
-      <!-- Demo -->
+        <div class="hero-media">
+          <video
+            v-if="HERO_VIDEO.mp4"
+            ref="heroVideo"
+            class="hero-video"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            :poster="HERO_VIDEO.poster || undefined"
+            aria-label="A review form rejecting a comment that contains profanity"
+          >
+            <source v-if="HERO_VIDEO.webm" :src="HERO_VIDEO.webm" type="video/webm" />
+            <source :src="HERO_VIDEO.mp4" type="video/mp4" />
+          </video>
+
+          <!-- Placeholder until the video is recorded: the same scene, static -->
+          <div v-else class="mock" role="img" aria-label="A review form rejecting a comment that contains profanity">
+            <div class="mock-chrome">
+              <span class="mock-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="mock-url">yourapp.com/courses/cs101/reviews</span>
+            </div>
+            <div class="mock-page">
+              <p class="mock-kicker">CS101 · Data Structures</p>
+              <p class="mock-title">Write a review</p>
+              <p class="mock-field-label">Your review</p>
+              <div class="mock-field is-error">
+                Lecturer ta <span class="mock-hit">muji jasto</span> cha
+              </div>
+              <p class="mock-error">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" /><path d="M8 4.5v4M8 11h.01" /></svg>
+                Your review contains language that isn't allowed.
+              </p>
+              <div class="mock-actions">
+                <span class="mock-btn is-disabled">Post review</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo -->
+    <section class="demo-section">
       <div class="wrap wrap-wide">
+        <h2 class="demo-heading">Try it on real comments.</h2>
         <div class="demo" aria-label="Interactive demo">
           <div class="demo-bar">
             <div class="demo-samples" role="tablist" aria-label="Sample comments">
@@ -395,11 +460,19 @@ const ports = [
 .wrap-wide {
   max-width: 1080px;
 }
+.wrap-hero {
+  max-width: 1200px;
+}
 
 /* Hero */
 .hero {
-  padding: 96px 0 72px;
-  text-align: center;
+  padding: 88px 0 96px;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+  gap: 64px;
+  align-items: center;
 }
 .eyebrow {
   font-size: 14px;
@@ -408,15 +481,15 @@ const ports = [
   margin: 0 0 20px;
 }
 .hero-title {
-  font-size: clamp(40px, 7vw, 76px);
+  font-size: clamp(40px, 5.2vw, 64px);
   line-height: 1.04;
   font-weight: 700;
   letter-spacing: -0.035em;
   margin: 0;
 }
 .hero-sub {
-  max-width: 620px;
-  margin: 24px auto 0;
+  max-width: 520px;
+  margin: 24px 0 0;
   font-size: clamp(17px, 2.2vw, 21px);
   line-height: 1.45;
   color: var(--mx-text-2);
@@ -426,7 +499,6 @@ const ports = [
   display: flex;
   gap: 28px;
   align-items: center;
-  justify-content: center;
   margin-top: 36px;
   flex-wrap: wrap;
 }
@@ -518,9 +590,157 @@ button:focus-visible,
   color: var(--mx-text-3);
 }
 
+/* Hero media: the video, or the mock that stands in for it */
+.hero-media {
+  position: relative;
+}
+.hero-video,
+.mock {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 20px;
+  border: 1px solid var(--mx-hairline);
+  background: var(--mx-card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 60px rgba(0, 0, 0, 0.1);
+}
+.hero-video {
+  object-fit: cover;
+}
+/* No overflow: hidden here, so the frame can grow past 16:10 when its content needs the room */
+.mock {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.mock-chrome {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--mx-hairline);
+  border-radius: 19px 19px 0 0;
+  background: var(--mx-bg-alt);
+  flex-shrink: 0;
+}
+.mock-dots {
+  display: flex;
+  gap: 6px;
+}
+.mock-dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mx-hairline);
+}
+.mock-url {
+  flex: 1;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 4px 12px;
+  border-radius: 7px;
+  background: var(--mx-card);
+  font-size: 12px;
+  color: var(--mx-text-3);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mock-page {
+  flex: 1;
+  padding: 20px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.mock-kicker {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mx-text-3);
+}
+.mock-title {
+  margin: 2px 0 16px;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.mock-field-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mx-text-2);
+}
+.mock-field {
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--mx-hairline);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.mock-field.is-error {
+  border-color: var(--mx-crimson);
+  box-shadow: 0 0 0 3px var(--mx-crimson-soft);
+}
+.mock-hit {
+  color: var(--mx-crimson);
+  text-decoration: underline wavy var(--mx-crimson);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+.mock-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--mx-crimson);
+}
+.mock-error svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.mock-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.mock-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 980px;
+  font-size: 15px;
+  font-weight: 500;
+  background: var(--vp-button-brand-bg);
+  color: #fff;
+}
+.mock-btn.is-disabled {
+  opacity: 0.35;
+}
+
 /* Demo */
+.demo-section {
+  padding: 0 0 24px;
+}
+.demo-heading {
+  margin: 0 0 28px;
+  text-align: center;
+  font-size: clamp(26px, 3.4vw, 32px);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  border: 0;
+  padding: 0;
+}
 .demo {
-  margin-top: 72px;
   text-align: left;
   border: 1px solid var(--mx-hairline);
   border-radius: 24px;
@@ -678,7 +898,7 @@ button:focus-visible,
 
 /* Stats */
 .stats {
-  padding: 8px 0 88px;
+  padding: 64px 0 88px;
 }
 .stats-grid {
   display: grid;
@@ -997,6 +1217,17 @@ button:focus-visible,
   font-size: 13px;
 }
 
+/* Stack the hero */
+@media (max-width: 960px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+  .hero-copy {
+    max-width: 620px;
+  }
+}
+
 /* Tablet */
 @media (max-width: 860px) {
   .ports {
@@ -1010,7 +1241,23 @@ button:focus-visible,
     padding: 0 16px;
   }
   .hero {
-    padding: 64px 0 56px;
+    padding: 56px 0 72px;
+  }
+  .hero-grid {
+    gap: 40px;
+  }
+  .mock {
+    aspect-ratio: auto;
+  }
+  .mock-page {
+    padding: 24px 20px;
+  }
+  .mock-field {
+    min-height: 84px;
+  }
+  .mock-title {
+    font-size: 20px;
+    margin-bottom: 18px;
   }
   .hero-title br {
     display: none;
@@ -1023,7 +1270,6 @@ button:focus-visible,
     font-size: 13px;
   }
   .demo {
-    margin-top: 48px;
     border-radius: 20px;
   }
   .demo-body {
