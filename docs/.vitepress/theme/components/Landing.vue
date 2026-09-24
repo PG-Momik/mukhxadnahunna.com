@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
-const INSTALL = "npm install no-nepali-profanity";
 const GITHUB = "https://github.com/PG-Momik/no-nepali-profanity";
 
 /*
@@ -14,19 +13,50 @@ const HERO_VIDEO = {
   poster: "",
 };
 
+/*
+ * Install commands for each port, shown on the faces of a rolling cube, with a note underneath that follows the
+ * visible face. Only JavaScript exists so far. The Composer vendor and the Go module path are placeholders until
+ * those repos exist.
+ */
+const INSTALLS = [
+  { cmd: "npm install no-nepali-profanity", note: "Pre-release. JavaScript is first, and on npm soon." },
+  { cmd: "pip install no-nepali-profanity", note: "Python port: coming soon." },
+  { cmd: "composer require pg-momik/no-nepali-profanity", note: "PHP and Laravel port: coming soon." },
+  { cmd: "go get github.com/PG-Momik/no-nepali-profanity-go", note: "Go port: coming soon." },
+];
+const ROLL_EVERY_MS = 2800;
+
+// Counts up forever so the cube always rolls the same way; the visible face is `turn % 4`.
+const turn = ref(0);
+const face = computed(() => turn.value % INSTALLS.length);
+// The note under the pill switches at the roll's midpoint, as the new face comes into view.
+const noteFace = ref(0);
+const rollPaused = ref(false);
+let rollTimer: ReturnType<typeof setInterval> | undefined;
+
 const heroVideo = ref<HTMLVideoElement | null>(null);
 onMounted(() => {
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // Respect reduced motion: don't autoplay, and give the viewer controls instead.
-  if (heroVideo.value && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (heroVideo.value && reducedMotion) {
     heroVideo.value.pause();
     heroVideo.value.controls = true;
   }
+  // Under reduced motion the cube stays on npm.
+  if (!reducedMotion) {
+    rollTimer = setInterval(() => {
+      if (rollPaused.value || document.hidden) return;
+      turn.value++;
+      setTimeout(() => (noteFace.value = face.value), 400);
+    }, ROLL_EVERY_MS);
+  }
 });
+onBeforeUnmount(() => clearInterval(rollTimer));
 
 const copied = ref(false);
 async function copyInstall() {
   try {
-    await navigator.clipboard.writeText(INSTALL);
+    await navigator.clipboard.writeText(INSTALLS[face.value].cmd);
     copied.value = true;
     setTimeout(() => (copied.value = false), 1600);
   } catch {
@@ -169,14 +199,36 @@ const ports = [
             View on GitHub <span aria-hidden="true">›</span>
           </a>
         </div>
-        <div class="install">
-          <code><span class="install-prompt" aria-hidden="true">$</span> {{ INSTALL }}</code>
+        <div
+          class="install"
+          @mouseenter="rollPaused = true"
+          @mouseleave="rollPaused = false"
+          @focusin="rollPaused = true"
+          @focusout="rollPaused = false"
+        >
+          <div class="install-roller">
+            <!-- Invisible copies of every command, stacked, so the pill is as wide as the longest one -->
+            <div class="install-sizer" aria-hidden="true">
+              <code v-for="c in INSTALLS" :key="c.cmd"><span class="install-prompt">$</span><span class="install-cmd">{{ c.cmd }}</span></code>
+            </div>
+            <div class="install-cube" :style="{ transform: `translateZ(-17px) rotateX(${turn * 90}deg)` }">
+              <code
+                v-for="(c, i) in INSTALLS"
+                :key="c.cmd"
+                class="install-face"
+                :style="{ transform: `rotateX(${-i * 90}deg) translateZ(17px)` }"
+                :aria-hidden="i !== face"
+              ><span class="install-prompt" aria-hidden="true">$</span><span class="install-cmd">{{ c.cmd }}</span></code>
+            </div>
+          </div>
           <button class="install-copy" type="button" :aria-label="copied ? 'Copied' : 'Copy install command'" @click="copyInstall">
             <svg v-if="!copied" viewBox="0 0 20 20" aria-hidden="true"><rect x="6.5" y="6.5" width="10" height="10" rx="2.5" /><path d="M13.5 6.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6.5a2 2 0 0 0 2 2h1.5" /></svg>
             <svg v-else viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8" /></svg>
           </button>
         </div>
-        <p class="install-note">Pre-release. Publishing to npm soon.</p>
+        <Transition name="note" mode="out-in">
+          <p :key="noteFace" class="install-note">{{ INSTALLS[noteFace].note }}</p>
+        </Transition>
         </div>
 
         <div class="hero-media">
@@ -470,7 +522,7 @@ const ports = [
 }
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 64px;
   align-items: center;
 }
@@ -548,15 +600,63 @@ button:focus-visible,
   background: var(--mx-bg-alt);
   max-width: 100%;
 }
-.install code {
+/* The rolling cube: four faces around the X axis, each 34px tall, so each sits 17px from the centre */
+.install-roller {
+  position: relative;
+  min-width: 0;
+  height: 34px;
+  perspective: 600px;
+}
+.install-sizer {
+  display: grid;
+  height: 34px;
+  visibility: hidden;
+}
+.install-sizer > code {
+  grid-area: 1 / 1;
+}
+.install-cube {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.install-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--mx-bg-alt);
+}
+.install-sizer > code,
+.install-face {
+  display: flex;
+  align-items: center;
+  gap: 1ch;
   min-width: 0;
   font-family: var(--vp-font-family-mono);
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 34px;
   color: var(--mx-text);
-  background: none;
   padding: 0;
   white-space: nowrap;
-  overflow-x: auto;
+  overflow: hidden;
+}
+.install-cmd {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.install-prompt {
+  flex-shrink: 0;
+}
+.note-enter-active,
+.note-leave-active {
+  transition: opacity 0.3s ease;
+}
+.note-enter-from,
+.note-leave-to {
+  opacity: 0;
 }
 .install-prompt {
   color: var(--mx-text-3);
@@ -1217,14 +1317,17 @@ button:focus-visible,
   font-size: 13px;
 }
 
-/* Stack the hero */
-@media (max-width: 960px) {
+/* Stack the hero once the text column gets too narrow for the longest install command */
+@media (max-width: 1100px) {
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 56px;
   }
   .hero-copy {
     max-width: 620px;
+  }
+  .hero-media {
+    max-width: 720px;
   }
 }
 
@@ -1266,8 +1369,9 @@ button:focus-visible,
     padding-left: 14px;
     gap: 6px;
   }
-  .install code {
-    font-size: 13px;
+  .install-sizer > code,
+  .install-face {
+    font-size: 12px;
   }
   .demo {
     border-radius: 20px;
