@@ -843,7 +843,7 @@ button:focus-visible,
 .demo {
   text-align: left;
   border: 1px solid var(--mx-hairline);
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--mx-card);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.06);
   overflow: hidden;
@@ -1372,9 +1372,6 @@ button:focus-visible,
   .install-sizer > code,
   .install-face {
     font-size: 12px;
-  }
-  .demo {
-    border-radius: 20px;
   }
   .demo-body {
     grid-template-columns: 1fr;
