@@ -79,5 +79,5 @@ added by hand, like `category` or `severity`, are lost. Commit or copy the file 
 
 ## Other ports
 
-The PHP, Python and Go ports will share the same word lists and matching rules. If you'd like to help build one, open an
+The Python, Go, PHP and Flutter ports will share the same word lists and matching rules. If you'd like to help build one, open an
 issue.

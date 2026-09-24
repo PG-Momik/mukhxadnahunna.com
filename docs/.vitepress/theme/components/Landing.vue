@@ -66,24 +66,52 @@ function trackProgress() {
 }
 
 /*
- * Install commands for each port, shown on the faces of a rolling cube, with a note underneath that follows the
- * visible face. Only JavaScript exists so far. The Composer vendor and the Go module path are placeholders until
- * those repos exist.
+ * Install commands for each port, shown on the faces of a rolling cube. Only JavaScript exists so far. The
+ * Composer vendor and the Go module path are placeholders until those repos exist.
  */
-const INSTALLS = [
-  { cmd: "npm install no-nepali-profanity", note: "Pre-release. JavaScript is first, and on npm soon." },
-  { cmd: "pip install no-nepali-profanity", note: "Python port: coming soon." },
-  { cmd: "composer require pg-momik/no-nepali-profanity", note: "PHP and Laravel port: coming soon." },
-  { cmd: "go get github.com/PG-Momik/no-nepali-profanity-go", note: "Go port: coming soon." },
+// The hero's "Get started" and "GitHub" buttons link to the language on screen. Until a port has its own `docs`
+// and `repo`, they fall back to the ports section and the JavaScript repo.
+const INSTALLS: { lang: string; cmd: string; docs?: string; repo?: string }[] = [
+  {
+    lang: "JS",
+    cmd: "npm install no-nepali-profanity",
+    docs: "/js/",
+    repo: GITHUB,
+  },
+  { lang: "Python", cmd: "pip install no-nepali-profanity" },
+  { lang: "Go", cmd: "go get github.com/PG-Momik/no-nepali-profanity-go" },
+  { lang: "PHP", cmd: "composer require pg-momik/no-nepali-profanity" },
+  { lang: "Flutter", cmd: "flutter pub add no_nepali_profanity" },
 ];
+
+// The commands sit on the faces of a prism that rolls around its horizontal axis: one face per language, each
+// 34px tall, so the prism's shape follows the length of INSTALLS.
+const FACE_HEIGHT = 34;
+const FACE_ANGLE = 360 / INSTALLS.length;
+const PRISM_RADIUS = FACE_HEIGHT / 2 / Math.tan(Math.PI / INSTALLS.length);
 const ROLL_EVERY_MS = 2800;
 
-// Counts up forever so the cube always rolls the same way; the visible face is `turn % 4`.
+// Counts up as the prism rolls (and down when picking a language rolls it back), so the visible face is `turn`
+// wrapped into 0..INSTALLS.length - 1. JavaScript's % keeps the sign, hence the extra wrap.
 const turn = ref(0);
-const face = computed(() => turn.value % INSTALLS.length);
-// The note under the pill switches at the roll's midpoint, as the new face comes into view.
+const face = computed(() => ((turn.value % INSTALLS.length) + INSTALLS.length) % INSTALLS.length);
+// The selected language tab and the buttons' links switch at the roll's midpoint, as the new face comes into view.
 const noteFace = ref(0);
 const rollPaused = ref(false);
+// Once the visitor picks a language, the cube stays on it.
+const picked = ref(false);
+const shown = computed(() => INSTALLS[noteFace.value]);
+const startLink = computed(() => shown.value.docs ?? "/#ports");
+const repoLink = computed(() => shown.value.repo ?? GITHUB);
+
+function pickLanguage(i: number) {
+  picked.value = true;
+  // Roll the short way round to the chosen face.
+  let delta = (i - face.value + INSTALLS.length) % INSTALLS.length;
+  if (delta > INSTALLS.length / 2) delta -= INSTALLS.length;
+  turn.value += delta;
+  noteFace.value = i;
+}
 let rollTimer: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
@@ -95,7 +123,7 @@ onMounted(() => {
   // Under reduced motion the cube stays on npm.
   if (!reducedMotion) {
     rollTimer = setInterval(() => {
-      if (rollPaused.value || document.hidden) return;
+      if (rollPaused.value || picked.value || document.hidden) return;
       turn.value++;
       setTimeout(() => (noteFace.value = face.value), 400);
     }, ROLL_EVERY_MS);
@@ -226,6 +254,7 @@ const ports = [
   { name: "Python", pkg: "PyPI", status: "Planned" },
   { name: "PHP & Laravel", pkg: "Packagist", status: "Planned" },
   { name: "Go", pkg: "Go modules", status: "Planned" },
+  { name: "Flutter & Dart", pkg: "pub.dev", status: "Planned" },
 ];
 </script>
 
@@ -236,15 +265,28 @@ const ports = [
       <div class="wrap wrap-hero hero-grid">
         <div class="hero-copy">
         <p class="eyebrow">Open source · MIT licensed</p>
-        <h1 class="hero-title">Profanity filtering <br />that understands Nepali.</h1>
+        <h1 class="hero-title">Nepali profanity filter <br />to keep it civil.</h1>
         <p class="hero-sub">
-          Detect and censor abuse in English, Romanized Nepali and Devanagari. It sees through disguised spellings
-          like sh1t and m.u.j.i, and won't flag real names like Shitij.
+          Detect and censor abuse in English, Romanized Nepali and Devanagari.
         </p>
+        <div class="langs" role="tablist" aria-label="Language">
+          <button
+            v-for="(c, i) in INSTALLS"
+            :key="c.lang"
+            type="button"
+            role="tab"
+            class="lang"
+            :class="{ 'is-active': noteFace === i }"
+            :aria-selected="noteFace === i"
+            @click="pickLanguage(i)"
+          >
+            {{ c.lang }}
+          </button>
+        </div>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="/js/">Get started</a>
-          <a class="btn-link" :href="GITHUB" target="_blank" rel="noopener">
-            View on GitHub <span aria-hidden="true">›</span>
+          <a class="btn btn-primary" :href="startLink">Get started</a>
+          <a class="btn-link" :href="repoLink" target="_blank" rel="noopener">
+            GitHub <span aria-hidden="true">›</span>
           </a>
         </div>
         <div
@@ -259,12 +301,12 @@ const ports = [
             <div class="install-sizer" aria-hidden="true">
               <code v-for="c in INSTALLS" :key="c.cmd"><span class="install-prompt">$</span><span class="install-cmd">{{ c.cmd }}</span></code>
             </div>
-            <div class="install-cube" :style="{ transform: `translateZ(-17px) rotateX(${turn * 90}deg)` }">
+            <div class="install-cube" :style="{ transform: `translateZ(${-PRISM_RADIUS}px) rotateX(${turn * FACE_ANGLE}deg)` }">
               <code
                 v-for="(c, i) in INSTALLS"
                 :key="c.cmd"
                 class="install-face"
-                :style="{ transform: `rotateX(${-i * 90}deg) translateZ(17px)` }"
+                :style="{ transform: `rotateX(${-i * FACE_ANGLE}deg) translateZ(${PRISM_RADIUS}px)` }"
                 :aria-hidden="i !== face"
               ><span class="install-prompt" aria-hidden="true">$</span><span class="install-cmd">{{ c.cmd }}</span></code>
             </div>
@@ -274,9 +316,6 @@ const ports = [
             <svg v-else viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8" /></svg>
           </button>
         </div>
-        <Transition name="note" mode="out-in">
-          <p :key="noteFace" class="install-note">{{ INSTALLS[noteFace].note }}</p>
-        </Transition>
         </div>
 
         <div class="hero-media">
@@ -506,24 +545,23 @@ const ports = [
       </div>
     </section>
 
-    <!-- Closing CTA -->
-    <section class="section cta">
+    <!-- Coverage: what it misses, and how to help -->
+    <section class="section coverage">
       <div class="wrap">
-        <h2 class="cta-title">Keep the conversation civil.</h2>
-        <p class="section-sub">Add it to your comment section, sign-up form or chat in a few minutes.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="/js/installation">Install</a>
-          <a class="btn-link" href="/js/examples">See examples <span aria-hidden="true">›</span></a>
+        <h2 class="section-title">It won't catch every bad word.</h2>
+        <p class="section-sub">
+          Slang changes fast, and no word list is ever complete. If something slips through, or a real name gets
+          flagged, open an issue or add the word yourself. Reviews from native Nepali speakers help the most.
+        </p>
+        <div class="coverage-actions">
+          <a class="btn btn-primary" :href="`${GITHUB}/issues/new`" target="_blank" rel="noopener">Suggest a word</a>
+          <a class="btn-link" href="/js/contributing">How to contribute <span aria-hidden="true">›</span></a>
         </div>
       </div>
     </section>
 
     <footer class="footer">
       <div class="wrap footer-grid">
-        <div class="footer-brand">
-          <img src="/logo.svg" alt="" width="24" height="24" />
-          <span>mukh-xadna-hunna</span>
-        </div>
         <nav aria-label="Documentation">
           <p class="footer-head">Docs</p>
           <a href="/js/">Introduction</a>
@@ -570,8 +608,8 @@ const ports = [
 }
 .hero-grid {
   display: grid;
-  /* The text column only needs to fit the longest install command; the video gets the rest */
-  grid-template-columns: minmax(0, 540px) minmax(0, 1fr);
+  /* The text column fits "Nepali profanity filter" on one line at full size; the video gets the rest */
+  grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
   gap: 56px;
   align-items: center;
 }
@@ -595,6 +633,34 @@ const ports = [
   line-height: 1.45;
   color: var(--mx-text-2);
   letter-spacing: -0.005em;
+}
+.langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 32px;
+}
+.lang {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 980px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mx-text-2);
+  background: var(--mx-bg-alt);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.lang:hover {
+  color: var(--mx-text);
+}
+.lang.is-active {
+  background: var(--mx-text);
+  color: var(--mx-bg);
+}
+/* Tabs, buttons and install command sit the same distance apart */
+.langs + .hero-actions,
+.hero-actions + .install {
+  margin-top: 24px;
 }
 .hero-actions {
   display: flex;
@@ -655,6 +721,8 @@ button:focus-visible,
   min-width: 0;
   height: 34px;
   perspective: 600px;
+  /* Show one face only: with more than four faces, the neighbours tilt into view above and below */
+  overflow: hidden;
 }
 .install-sizer {
   display: grid;
@@ -699,14 +767,6 @@ button:focus-visible,
 .install-prompt {
   flex-shrink: 0;
 }
-.note-enter-active,
-.note-leave-active {
-  transition: opacity 0.3s ease;
-}
-.note-enter-from,
-.note-leave-to {
-  opacity: 0;
-}
 .install-prompt {
   color: var(--mx-text-3);
   user-select: none;
@@ -733,11 +793,6 @@ button:focus-visible,
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.install-note {
-  margin: 12px 0 0;
-  font-size: 13px;
-  color: var(--mx-text-3);
-}
 
 /* Hero media: the demo videos, cross-fading from one to the next, with tabs underneath */
 .hero-media {
@@ -747,9 +802,9 @@ button:focus-visible,
   position: relative;
   aspect-ratio: 1920 / 1210;
   border-radius: 12px;
-  border: 1px solid var(--mx-hairline);
+  border: 1px solid var(--mx-screen-border);
   background: var(--mx-card);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 60px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 24px 60px rgba(0, 0, 0, 0.14);
   overflow: hidden;
 }
 .hero-video {
@@ -1205,7 +1260,7 @@ button:focus-visible,
 /* Ports */
 .ports {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-top: 56px;
 }
@@ -1239,18 +1294,14 @@ button:focus-visible,
   margin-top: auto;
 }
 
-/* Closing CTA */
-.cta {
-  text-align: center;
-}
-.cta-title {
-  margin: 0;
-  font-size: clamp(36px, 6vw, 56px);
-  line-height: 1.05;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  border: 0;
-  padding: 0;
+/* Coverage */
+.coverage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 32px;
 }
 
 /* Footer */
@@ -1261,16 +1312,9 @@ button:focus-visible,
   font-size: 14px;
 }
 .footer-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 32px;
-}
-.footer-brand {
-  align-self: start;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
+  justify-content: space-between;
+  gap: 32px;
 }
 .footer nav {
   display: flex;
@@ -1301,7 +1345,7 @@ button:focus-visible,
 }
 
 /* Stack the hero before the video gets smaller than it would be stacked */
-@media (max-width: 1180px) {
+@media (max-width: 1240px) {
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 56px;
@@ -1382,12 +1426,6 @@ button:focus-visible,
   }
   .ports {
     grid-template-columns: 1fr;
-  }
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .footer-brand {
-    grid-column: 1 / -1;
   }
 }
 
