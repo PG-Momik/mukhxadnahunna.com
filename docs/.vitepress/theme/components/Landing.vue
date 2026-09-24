@@ -474,7 +474,7 @@ const ports = [
       <div class="wrap footer-grid">
         <div class="footer-brand">
           <img src="/logo.svg" alt="" width="24" height="24" />
-          <span>mukhxadnahunna</span>
+          <span>mukh-xadna-hunna</span>
         </div>
         <nav aria-label="Documentation">
           <p class="footer-head">Docs</p>
@@ -1058,7 +1058,7 @@ button:focus-visible,
 }
 .card {
   padding: 32px;
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--mx-card);
 }
 .card-wide {
@@ -1094,7 +1094,7 @@ button:focus-visible,
   justify-content: space-between;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--mx-bg-alt);
 }
 .tokens code {
@@ -1131,7 +1131,7 @@ button:focus-visible,
 
 .before-after {
   margin-top: 24px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--mx-bg-alt);
   padding: 4px 16px;
 }

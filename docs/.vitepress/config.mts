@@ -5,7 +5,7 @@ const JS_REPO = "https://github.com/PG-Momik/no-nepali-profanity";
 const SITE_REPO = "https://github.com/PG-Momik/mukhxadnahunna.com";
 
 export default defineConfig({
-  title: "mukhxadnahunna",
+  title: "mukh-xadna-hunna",
   description: "Profanity filtering for Nepali text: English, Romanized Nepali and Devanagari.",
   lang: "en-US",
   cleanUrls: true,
@@ -25,7 +25,7 @@ export default defineConfig({
     ],
     ["meta", { name: "theme-color", content: "#ffffff" }],
     ["meta", { property: "og:type", content: "website" }],
-    ["meta", { property: "og:title", content: "mukhxadnahunna" }],
+    ["meta", { property: "og:title", content: "mukh-xadna-hunna" }],
     [
       "meta",
       {
@@ -36,8 +36,6 @@ export default defineConfig({
   ],
 
   themeConfig: {
-    logo: { src: "/logo.svg", alt: "" },
-
     nav: [
       { text: "Docs", link: "/js/", activeMatch: "^/js/(?!api|examples|changelog)" },
       { text: "Examples", link: "/js/examples" },

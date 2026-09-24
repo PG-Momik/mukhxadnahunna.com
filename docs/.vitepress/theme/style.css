@@ -88,6 +88,10 @@ body {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
+/* No rule under the brand above the sidebar */
+.VPNavBarTitle.has-sidebar .title {
+  border-bottom-color: transparent !important;
+}
 
 /* Documentation pages: slightly tighter headings */
 .vp-doc h1 {
