@@ -1,7 +1,6 @@
 import { defineConfig } from "vitepress";
-import { DOC_PAGES, PORTS } from "./theme/languages";
+import { DOC_PAGES, PORTS, SITE_REPO } from "./theme/languages";
 
-const SITE_REPO = "https://github.com/PG-Momik/mukhxadnahunna.com";
 
 export default defineConfig({
   title: "mukh-xadna-hunna",
@@ -56,7 +55,7 @@ export default defineConfig({
       ])
     ),
 
-    socialLinks: [{ icon: "github", link: SITE_REPO }],
+    // No socialLinks: the GitHub icon is theme/components/NavGitHub.vue, which links to the page's port.
 
     editLink: {
       pattern: `${SITE_REPO}/edit/main/docs/:path`,
@@ -65,9 +64,10 @@ export default defineConfig({
 
     search: { provider: "local" },
 
+    // Three items spread across the row; see .VPFooter .message in theme/style.css.
     footer: {
-      message: 'Built with purpose by <a href="https://momik.dev" target="_blank" rel="noopener">Momik Shrestha</a>.',
-      copyright: "Released under the MIT License.",
+      message:
+        '<span>Built with purpose</span><a href="https://momik.dev" target="_blank" rel="noopener">Momik Shrestha</a><span>Released under the MIT License</span>',
     },
   },
 });

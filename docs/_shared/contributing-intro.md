@@ -4,7 +4,7 @@ right strictness.
 
 ## Reporting a problem
 
-Open an issue on [GitHub](https://github.com/PG-Momik/no-nepali-profanity/issues) with:
+Open an issue on <RepoLink path="/issues">GitHub</RepoLink> with:
 
 - the **exact input text**,
 - which words were found, and what you expected,
@@ -13,4 +13,6 @@ Open an issue on [GitHub](https://github.com/PG-Momik/no-nepali-profanity/issues
 For a false positive, say whether the word is a name, a place or an ordinary word. That decides whether it's removed
 or moved to the strict level.
 
-Every port shares one issue tracker, because every port shares the word lists.
+Each package has its own issue tracker, and the link above goes to this one's. To suggest a word for every
+package, open the issue in the [JavaScript repository](https://github.com/PG-Momik/no-nepali-profanity/issues), where
+the word lists are maintained.

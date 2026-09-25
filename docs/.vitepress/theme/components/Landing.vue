@@ -9,6 +9,7 @@ import censoredMp4 from "../media/comment-censored.mp4";
 import censoredWebm from "../media/comment-censored.webm";
 import censoredPoster from "../media/comment-censored-poster.jpg";
 
+import { check } from "no-nepali-profanity";
 import { GITHUB, PORTS } from "../languages";
 
 /*
@@ -164,48 +165,52 @@ async function copyInstall() {
   }
 }
 
-/*
- * Demo data. Generated from the package's own check() and censor() output, so every result shown here is what
- * the library really returns. `m` is the masked form of a matched segment.
- */
-type Segment = { t: string; m?: string };
-const samples: { label: string; segments: Segment[]; words: string[] }[] = [
-  {
-    label: "Romanized Nepali",
-    segments: [{ t: "yo " }, { t: "khatey", m: "******" }, { t: " payment app kahiley chaley po" }],
-    words: ["khatey"],
-  },
-  {
-    label: "Devanagari",
-    segments: [{ t: "मुजीको", m: "***" }, { t: " क्लास, कहिल्यै नआउनु" }],
-    words: ["मुजीको"],
-  },
-  {
-    label: "English, leetspeak",
-    segments: [{ t: "Great lecture, but the lab was " }, { t: "sh1t", m: "****" }, { t: "." }],
-    words: ["shit"],
-  },
-  {
-    label: "Symbols",
-    segments: [{ t: "this restro is " }, { t: "@ss", m: "***" }],
-    words: ["ass"],
-  },
-  {
-    label: "Spelled out",
-    segments: [{ t: "F.U.C.K", m: "*******" }, { t: " this assignment" }],
-    words: ["fuck"],
-  },
-  {
-    label: "A real name",
-    segments: [{ t: "Randip Thapa explained it really well" }],
-    words: [],
-  },
+/* The demo runs the real package on whatever is in the box. The samples are starting points to edit. */
+const samples = [
+  { label: "Romanized Nepali", text: "yo khatey payment app kahiley chaley po" },
+  { label: "Devanagari", text: "मुजीको क्लास, कहिल्यै नआउनु" },
+  { label: "English, leetspeak", text: "Great lecture, but the lab was sh1t." },
+  { label: "Symbols", text: "this restro is @ss" },
+  { label: "Spelled out", text: "F.U.C.K this assignment" },
+  { label: "A real name", text: "Randip Thapa explained it really well" },
 ];
 
-const active = ref(0);
+const active = ref<number | null>(0);
 const mode = ref<"detect" | "censor">("censor");
-const current = computed(() => samples[active.value]);
-const inputText = computed(() => current.value.segments.map((s) => s.t).join(""));
+const text = ref(samples[0].text);
+const result = computed(() => check(text.value));
+
+function pickSample(i: number) {
+  active.value = i;
+  text.value = samples[i].text;
+}
+// Editing the text deselects the sample it started from.
+function onType() {
+  if (active.value !== null && text.value !== samples[active.value].text) active.value = null;
+}
+
+// Splits the output into plain text and matches, so matches can be styled. The library merges overlapping matches
+// before calling replace, so each one arrives once; private-use characters mark where it starts and ends.
+const OPEN = "\uE000";
+const CLOSE = "\uE001";
+const graphemes =
+  typeof Intl !== "undefined" && "Segmenter" in Intl
+    ? (s: string) => [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(s)].map((g) => g.segment)
+    : (s: string) => [...s];
+const maskOf = (s: string) => graphemes(s).map((g) => (/^\s+$/.test(g) ? g : "*")).join("");
+const outputSegments = computed(() => {
+  const marked = result.value.censor({
+    replace: (m) => OPEN + (mode.value === "censor" ? maskOf(m.text) : m.text) + CLOSE,
+  });
+  return marked
+    .split(OPEN)
+    .flatMap((part, i) => {
+      if (i === 0) return [{ t: part, hit: false }];
+      const [hit, rest] = part.split(CLOSE);
+      return [{ t: hit, hit: true }, { t: rest, hit: false }];
+    })
+    .filter((seg) => seg.t);
+});
 const call = computed(() =>
   mode.value === "censor" ? "check(text).censor()" : "check(text).words"
 );
@@ -273,6 +278,7 @@ const ports = PORTS.map((p) => ({
   pkg: p.registry,
   released: p.released,
   href: p.docs,
+  repo: p.repo,
 }));
 </script>
 
@@ -401,7 +407,7 @@ const ports = PORTS.map((p) => ({
                 type="button"
                 :aria-selected="active === i"
                 :class="{ 'is-active': active === i }"
-                @click="active = i"
+                @click="pickSample(i)"
               >
                 {{ s.label }}
               </button>
@@ -410,8 +416,18 @@ const ports = PORTS.map((p) => ({
 
           <div class="demo-body">
             <div class="demo-pane">
-              <p class="demo-label">Comment</p>
-              <p class="demo-text">{{ inputText }}</p>
+              <label class="demo-label" for="demo-input">Comment <span class="demo-hint">Edit it, or type your own</span></label>
+              <textarea
+                id="demo-input"
+                v-model="text"
+                class="demo-text demo-input"
+                rows="3"
+                maxlength="500"
+                spellcheck="false"
+                autocomplete="off"
+                placeholder="Type a comment in English, Romanized Nepali or Devanagari…"
+                @input="onType"
+              ></textarea>
             </div>
             <div class="demo-pane demo-pane-out">
               <div class="demo-out-head">
@@ -421,22 +437,14 @@ const ports = PORTS.map((p) => ({
                   <button type="button" :aria-pressed="mode === 'censor'" :class="{ 'is-active': mode === 'censor' }" @click="mode = 'censor'">Censor</button>
                 </div>
               </div>
-              <p v-if="mode === 'censor'" class="demo-text">
-                <template v-for="(seg, i) in current.segments" :key="i">
-                  <span v-if="seg.m" class="masked">{{ seg.m }}</span><template v-else>{{ seg.t }}</template>
-                </template>
-              </p>
-              <p v-else class="demo-text">
-                <template v-for="(seg, i) in current.segments" :key="i">
-                  <mark v-if="seg.m" class="hit">{{ seg.t }}</mark><template v-else>{{ seg.t }}</template>
-                </template>
-              </p>
-              <p class="demo-status" :class="current.words.length ? 'is-flagged' : 'is-clean'">
+              <p class="demo-text demo-output" aria-live="polite"><template v-for="(seg, i) in outputSegments" :key="i"><template v-if="!seg.hit">{{ seg.t }}</template><span v-else-if="mode === 'censor'" class="masked">{{ seg.t }}</span><mark v-else class="hit">{{ seg.t }}</mark></template></p>
+              <p class="demo-status" :class="result.hasProfanity ? 'is-flagged' : 'is-clean'">
                 <span class="dot" aria-hidden="true"></span>
-                <template v-if="current.words.length">
-                  Flagged: <code v-for="w in current.words" :key="w">{{ w }}</code>
+                <template v-if="result.hasProfanity">
+                  Flagged: <code v-for="w in result.words" :key="w">{{ w }}</code>
                 </template>
-                <template v-else>Clean. Nothing flagged.</template>
+                <template v-else-if="text.trim()">Clean. Nothing flagged.</template>
+                <template v-else>Type something to check it.</template>
               </p>
             </div>
           </div>
@@ -553,18 +561,23 @@ const ports = PORTS.map((p) => ({
         <p class="section-sub">Each port shares the same word lists and matching rules, so a comment gets the same result in every language.</p>
 
         <div class="ports">
-          <component
-            :is="p.href ? 'a' : 'div'"
-            v-for="p in ports"
-            :key="p.name"
-            class="port"
-            :class="{ 'port-live': p.href }"
-            :href="p.href"
-          >
-            <p class="port-name">{{ p.name }}</p>
+          <!-- The docs link covers the whole card; the GitHub link sits above it -->
+          <div v-for="p in ports" :key="p.name" class="port" :class="{ 'port-live': p.href }">
+            <a class="port-name port-docs" :href="p.href">{{ p.name }}</a>
             <p class="port-pkg">{{ p.pkg }}</p>
             <span v-if="!p.released" class="tag tag-muted">Planned</span>
-          </component>
+            <a
+              v-if="p.repo"
+              class="port-repo"
+              :href="p.repo"
+              target="_blank"
+              rel="noopener"
+              :aria-label="`${p.name} on GitHub`"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg>
+              GitHub
+            </a>
+          </div>
         </div>
       </div>
     </section>
@@ -602,7 +615,9 @@ const ports = PORTS.map((p) => ({
         </nav>
       </div>
       <div class="wrap footer-legal">
-        <p>Built with purpose by <a href="https://momik.dev" target="_blank" rel="noopener">Momik Shrestha</a>. Released under the MIT License.</p>
+        <p>Built with purpose</p>
+        <p><a href="https://momik.dev" target="_blank" rel="noopener">Momik Shrestha</a></p>
+        <p>Released under the MIT License</p>
       </div>
     </footer>
   </div>
@@ -623,7 +638,7 @@ const ports = PORTS.map((p) => ({
   max-width: 1080px;
 }
 .wrap-hero {
-  max-width: 1320px;
+  max-width: none;
 }
 
 /* Hero */
@@ -652,10 +667,14 @@ const ports = PORTS.map((p) => ({
 }
 .hero-grid {
   display: grid;
-  /* The text column fits "Nepali profanity filter" on one line at full size; the video gets the rest */
-  grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
-  gap: 56px;
+  /* The video gets the larger share: it's a recording of a full page, and its text is unreadable much smaller */
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 48px;
   align-items: center;
+}
+.hero-grid .hero-title {
+  /* Sized to the narrower text column, so "Nepali profanity filter" still fits on one line */
+  font-size: clamp(40px, 3.4vw, 52px);
 }
 .eyebrow {
   font-size: 14px;
@@ -743,9 +762,13 @@ const ports = PORTS.map((p) => ({
 .btn:focus-visible,
 .btn-link:focus-visible,
 button:focus-visible,
-.port:focus-visible {
+.port:has(.port-docs:focus-visible),
+.port-repo:focus-visible {
   outline: 2px solid var(--mx-blue);
   outline-offset: 3px;
+}
+.port-docs:focus-visible {
+  outline: none;
 }
 
 .install {
@@ -1036,6 +1059,35 @@ button:focus-visible,
   min-height: 64px;
   word-break: break-word;
 }
+.demo-output {
+  white-space: pre-wrap;
+}
+.demo-input {
+  display: block;
+  width: 100%;
+  min-height: calc(3 * 1.45em);
+  padding: 0;
+  border: 0;
+  resize: none;
+  field-sizing: content; /* grows with the text where supported */
+  background: transparent;
+  color: var(--mx-text);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1.45;
+  outline: none;
+}
+.demo-input::placeholder {
+  color: var(--mx-text-3);
+}
+.demo-pane:has(.demo-input:focus-visible) {
+  box-shadow: inset 0 0 0 2px var(--mx-blue);
+}
+.demo-hint {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--mx-text-3);
+}
 .masked {
   color: var(--mx-crimson);
   font-family: var(--vp-font-family-mono);
@@ -1309,6 +1361,7 @@ button:focus-visible,
   margin-top: 56px;
 }
 .port {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1328,6 +1381,38 @@ button:focus-visible,
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+.port-docs {
+  color: inherit;
+  text-decoration: none;
+}
+/* Stretch the docs link over the whole card */
+.port-docs::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.port-repo {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mx-text-2);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.port-repo:hover {
+  color: var(--mx-text);
+}
+.port-repo svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
 }
 .port-pkg {
   margin: 4px 0 20px;
@@ -1381,6 +1466,10 @@ button:focus-visible,
   color: var(--mx-text);
 }
 .footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
   margin-top: 40px;
   padding-top: 20px;
   border-top: 1px solid var(--mx-hairline);
@@ -1404,6 +1493,9 @@ button:focus-visible,
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 56px;
+  }
+  .hero-grid .hero-title {
+    font-size: clamp(40px, 5.2vw, 64px);
   }
   .hero-copy {
     max-width: 620px;

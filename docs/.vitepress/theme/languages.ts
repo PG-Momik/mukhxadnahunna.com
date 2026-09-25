@@ -7,6 +7,7 @@
  */
 
 export const GITHUB = "https://github.com/PG-Momik/no-nepali-profanity";
+export const SITE_REPO = "https://github.com/PG-Momik/mukhxadnahunna.com";
 
 export interface Port {
   id: string;
@@ -108,6 +109,9 @@ export const DOC_PAGES = [
 
 /** The port whose docs the path is in, if any. */
 export const portForPath = (path: string) => PORTS.find((p) => path.startsWith(p.docs));
+
+/** The repository for a page: the port's own in its docs, and this site's everywhere else. */
+export const repoForPath = (path: string) => portForPath(path)?.repo ?? SITE_REPO;
 
 /**
  * Where to go when switching to `to` from `path`. Between released ports it keeps the same page (/js/usage →

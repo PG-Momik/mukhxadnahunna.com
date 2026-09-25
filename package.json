@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "vitepress": "^1.6.4"
+  },
+  "dependencies": {
+    "no-nepali-profanity": "^0.1.0"
   }
 }

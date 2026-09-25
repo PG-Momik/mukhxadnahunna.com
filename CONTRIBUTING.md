@@ -4,8 +4,8 @@ This is the documentation site for the `no-nepali-profanity` packages, at
 [mukhxadnahunna.com](https://mukhxadnahunna.com). Fixes to wording, examples and typos are welcome. Every page has an
 "Edit this page on GitHub" link at the bottom.
 
-To report a problem with the packages themselves, or suggest a word, use the shared issue tracker:
-[github.com/PG-Momik/no-nepali-profanity/issues](https://github.com/PG-Momik/no-nepali-profanity/issues).
+To report a problem with a package, open an issue in that package's repository. Word suggestions go to the
+[JavaScript repository](https://github.com/PG-Momik/no-nepali-profanity/issues), where the word lists are maintained.
 
 ## Development setup
 
