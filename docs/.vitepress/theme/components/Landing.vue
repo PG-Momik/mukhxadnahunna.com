@@ -80,14 +80,11 @@ const ROLL_EVERY_MS = 2800;
 // wrapped into 0..INSTALLS.length - 1. JavaScript's % keeps the sign, hence the extra wrap.
 const turn = ref(0);
 const face = computed(() => ((turn.value % INSTALLS.length) + INSTALLS.length) % INSTALLS.length);
-// The selected language tab and the buttons' links switch at the roll's midpoint, as the new face comes into view.
+// The selected language tab switches at the roll's midpoint, as the new face comes into view.
 const noteFace = ref(0);
 const rollPaused = ref(false);
 // Once the visitor picks a language, the cube stays on it.
 const picked = ref(false);
-const shown = computed(() => INSTALLS[noteFace.value]);
-// "GitHub" opens the selected port's repo, falling back to the JavaScript repo.
-const repoLink = computed(() => shown.value.repo ?? GITHUB);
 
 function pickLanguage(i: number) {
   picked.value = true;
@@ -310,9 +307,6 @@ const ports = PORTS.map((p) => ({
         <div class="hero-actions">
           <!-- vp-raw: VitePress's router would otherwise catch the click first and jump without animating -->
           <a class="btn btn-primary vp-raw" href="#stacks" @click.prevent="scrollToStacks">Get started</a>
-          <a class="btn-link" :href="repoLink" target="_blank" rel="noopener">
-            GitHub <span aria-hidden="true">›</span>
-          </a>
         </div>
         <div
           class="install"
@@ -556,27 +550,29 @@ const ports = PORTS.map((p) => ({
 
     <!-- Ports -->
     <section id="stacks" class="section section-alt">
-      <div class="wrap">
+      <div class="wrap wrap-wide">
         <h2 class="section-title">One lexicon. Every stack.</h2>
         <p class="section-sub">Each port shares the same word lists and matching rules, so a comment gets the same result in every language.</p>
 
         <div class="ports">
-          <!-- The docs link covers the whole card; the GitHub link sits above it -->
-          <div v-for="p in ports" :key="p.name" class="port" :class="{ 'port-live': p.href }">
-            <a class="port-name port-docs" :href="p.href">{{ p.name }}</a>
+          <div v-for="p in ports" :key="p.name" class="port">
+            <p class="port-name">{{ p.name }}</p>
             <p class="port-pkg">{{ p.pkg }}</p>
             <span v-if="!p.released" class="tag tag-muted">Planned</span>
-            <a
-              v-if="p.repo"
-              class="port-repo"
-              :href="p.repo"
-              target="_blank"
-              rel="noopener"
-              :aria-label="`${p.name} on GitHub`"
-            >
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg>
-              GitHub
-            </a>
+            <div class="port-actions">
+              <a class="port-btn port-btn-docs" :href="p.href" :aria-label="`${p.name} docs`">Docs</a>
+              <a
+                v-if="p.repo"
+                class="port-btn port-btn-repo"
+                :href="p.repo"
+                target="_blank"
+                rel="noopener"
+                :aria-label="`${p.name} on GitHub`"
+                :title="`${p.name} on GitHub`"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -637,8 +633,10 @@ const ports = PORTS.map((p) => ({
 .wrap-wide {
   max-width: 1080px;
 }
+/* Wider than the other sections, with side margins that grow with the viewport */
 .wrap-hero {
-  max-width: none;
+  max-width: 90rem;
+  padding-inline: clamp(1.5rem, 5vw, 5rem);
 }
 
 /* Hero */
@@ -668,13 +666,16 @@ const ports = PORTS.map((p) => ({
 .hero-grid {
   display: grid;
   /* The video gets the larger share: it's a recording of a full page, and its text is unreadable much smaller */
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: 48px;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: clamp(2rem, 4vw, 4rem);
   align-items: center;
 }
+.hero-copy {
+  container-type: inline-size;
+}
 .hero-grid .hero-title {
-  /* Sized to the narrower text column, so "Nepali profanity filter" still fits on one line */
-  font-size: clamp(40px, 3.4vw, 52px);
+  /* Sized to the text column's width, so "Nepali profanity filter" still fits on one line */
+  font-size: clamp(2.25rem, 9.5cqi, 3.5rem);
 }
 .eyebrow {
   font-size: 14px;
@@ -762,13 +763,9 @@ const ports = PORTS.map((p) => ({
 .btn:focus-visible,
 .btn-link:focus-visible,
 button:focus-visible,
-.port:has(.port-docs:focus-visible),
-.port-repo:focus-visible {
+.port-btn:focus-visible {
   outline: 2px solid var(--mx-blue);
   outline-offset: 3px;
-}
-.port-docs:focus-visible {
-  outline: none;
 }
 
 .install {
@@ -864,11 +861,14 @@ button:focus-visible,
 /* Hero media: the demo videos, cross-fading from one to the next, with tabs underneath */
 .hero-media {
   position: relative;
+  width: 100%;
 }
 .hero-screen {
   position: relative;
+  width: 100%;
+  /* The recordings' own shape, so they fill the frame without cropping or stretching */
   aspect-ratio: 1920 / 1210;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   border: 1px solid var(--mx-screen-border);
   background: var(--mx-card);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 24px 60px rgba(0, 0, 0, 0.14);
@@ -889,8 +889,8 @@ button:focus-visible,
 .hero-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-top: 20px;
+  gap: clamp(0.875rem, 2%, 1.25rem);
+  margin-top: 1.25rem;
 }
 .hero-tab {
   display: flex;
@@ -948,7 +948,7 @@ button:focus-visible,
 .demo {
   text-align: left;
   border: 1px solid var(--mx-hairline);
-  border-radius: 12px;
+  border-radius: 12px 12px 0 0;
   background: var(--mx-card);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.06);
   overflow: hidden;
@@ -1361,20 +1361,13 @@ button:focus-visible,
   margin-top: 56px;
 }
 .port {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 24px;
+  padding: 20px;
   border-radius: 20px;
   background: var(--mx-card);
   color: var(--mx-text);
-  text-decoration: none;
-  border: 1px solid transparent;
-  transition: border-color 0.2s ease;
-}
-.port-live:hover {
-  border-color: var(--mx-blue);
 }
 .port-name {
   margin: 0;
@@ -1382,36 +1375,52 @@ button:focus-visible,
   font-weight: 600;
   letter-spacing: -0.01em;
 }
-.port-docs {
-  color: inherit;
-  text-decoration: none;
+/* Docs and GitHub on one line */
+.port-actions {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-top: auto;
 }
-/* Stretch the docs link over the whole card */
-.port-docs::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-}
-.port-repo {
-  position: relative;
-  z-index: 1;
+.port-btn {
+  flex: 1 1 auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: auto;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--mx-hairline);
   font-size: 13px;
+  white-space: nowrap;
   font-weight: 500;
-  color: var(--mx-text-2);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-.port-repo:hover {
   color: var(--mx-text);
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
-.port-repo svg {
-  width: 14px;
-  height: 14px;
+.port-btn:hover {
+  background: var(--mx-bg-alt);
+  border-color: var(--mx-text-3);
+}
+.port-btn-docs {
+  border-color: transparent;
+  background: var(--vp-button-brand-bg);
+  color: #fff;
+}
+.port-btn-docs:hover {
+  border-color: transparent;
+  background: var(--vp-button-brand-hover-bg);
+}
+/* Icon only, square */
+.port-btn-repo {
+  flex: 0 0 auto;
+  width: 32px;
+  padding: 0;
+}
+.port-btn svg {
+  width: 16px;
+  height: 16px;
   fill: currentColor;
 }
 .port-pkg {
@@ -1423,7 +1432,7 @@ button:focus-visible,
   scroll-margin-top: var(--vp-nav-height, 64px);
 }
 .port .tag {
-  margin-top: auto;
+  margin-bottom: 16px;
 }
 
 /* Coverage */
@@ -1492,16 +1501,20 @@ button:focus-visible,
 @media (max-width: 1240px) {
   .hero-grid {
     grid-template-columns: 1fr;
-    gap: 56px;
+    gap: clamp(2.5rem, 6vw, 3.5rem);
   }
   .hero-grid .hero-title {
-    font-size: clamp(40px, 5.2vw, 64px);
+    font-size: clamp(2.5rem, 5.2vw, 4rem);
   }
   .hero-copy {
-    max-width: 620px;
+    max-width: 40rem;
   }
-  .hero-media {
-    max-width: 880px;
+}
+
+/* Five port cards in a row get too narrow for their two buttons */
+@media (max-width: 1100px) {
+  .ports {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -1519,12 +1532,6 @@ button:focus-visible,
   }
   .hero {
     padding: 56px 0 72px;
-  }
-  .hero-grid {
-    gap: 40px;
-  }
-  .hero-tabs {
-    gap: 14px;
   }
   .hero-title br {
     display: none;
