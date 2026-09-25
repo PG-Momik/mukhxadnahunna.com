@@ -7,22 +7,33 @@ GitHub Pages at <https://mukhxadnahunna.com>.
 
 ```
 docs/
-  index.md            landing page for all ports
-  js/                 JavaScript / TypeScript port
-  public/CNAME        custom domain for GitHub Pages
-  .vitepress/config.mts   nav, sidebar and repository links
+  index.md                 landing page for all ports
+  js/ python/ go/ php/ flutter/
+                           one folder per port, each with the same twelve pages
+  _shared/                 sections every port includes: how matching works, limitations, the lexicon's levels,
+                           contributing rules and the introduction's features
+  public/CNAME             custom domain for GitHub Pages
+  .vitepress/config.mts    nav and sidebar
+  .vitepress/theme/languages.ts
+                           the ports and the list of doc pages
 ```
 
 The ports are listed once, in `docs/.vitepress/theme/languages.ts`. The landing page (language tabs, rolling
-install command, buttons, ports section) and the language switcher in the nav bar all read from it. Each unreleased
-port has a "coming soon" page at `docs/<port>/index.md`.
+install command, buttons, ports section), the language switcher in the sidebar, the sidebar itself and the top nav
+all read from it.
 
-To release a port (for example PHP):
+Every port has the same pages (`DOC_PAGES` in `languages.ts`), so the switcher keeps readers on the same page when
+they change language. Text that doesn't depend on the language lives once in `docs/_shared/` and is pulled into each
+port's page with `<!--@include: ../_shared/…-->`. Code examples are written per port, in that port's syntax.
 
-1. Replace `docs/php/index.md` with the real docs, using the same page names as `docs/js/` (`usage.md`, `api.md`…),
-   so the switcher keeps readers on the same page when they change language.
-2. Add a sidebar for `"/php/"` in `config.mts`.
-3. In `languages.ts`, set `released: true` and add the port's `repo`.
+To add a port:
+
+1. Add it to `PORTS` in `languages.ts`, with `released: false`. Until it's released, it gets a one-page "coming soon"
+   sidebar, so write that page at `docs/<port>/index.md`.
+2. Write its docs under `docs/<port>/`, with one page for each entry in `DOC_PAGES`.
+3. Set `released: true`.
+
+When a package is published to its registry, remove the "Pre-release" warning from its `installation.md`.
 
 ## Hero video
 

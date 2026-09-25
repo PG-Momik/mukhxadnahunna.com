@@ -80,6 +80,12 @@ Yes, for typical user text like comments, reviews and names. A filter builds its
 is a single pass over the words in the text. To both check and censor, use `check(text)`, which reuses one scan for
 both.
 
+## Is it available in other languages?
+
+Yes: [Python](/python/), [Go](/go/), [PHP](/php/) and [Flutter & Dart](/flutter/). Every port uses the same word
+lists and matching rules, and is tested against this package's output, so a comment gets the same result on every
+part of your stack.
+
 ## Does it support CommonJS?
 
 The package is ESM-only. In a CommonJS file, load it with `await import("no-nepali-profanity")`. See

@@ -1,5 +1,5 @@
 import { defineConfig } from "vitepress";
-import { PORTS } from "./theme/languages";
+import { DOC_PAGES, PORTS } from "./theme/languages";
 
 // Update these when the repositories are created or renamed.
 const JS_REPO = "https://github.com/PG-Momik/no-nepali-profanity";
@@ -14,6 +14,8 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   sitemap: { hostname: "https://mukhxadnahunna.com" },
+  // Sections every port's docs pull in with <!--@include: ../_shared/…-->; not pages of their own.
+  srcExclude: ["_shared/**"],
 
   head: [
     ["link", { rel: "preconnect", href: "https://fonts.googleapis.com" }],
@@ -38,48 +40,23 @@ export default defineConfig({
   ],
 
   themeConfig: {
+    // Each link goes to the page in the port you're reading, or in the JavaScript docs elsewhere.
     nav: [
-      { text: "Docs", link: "/js/", activeMatch: "^/js/(?!api|examples|changelog)" },
-      { text: "Examples", link: "/js/examples" },
-      { text: "API", link: "/js/api" },
-      { text: "Changelog", link: "/js/changelog" },
+      { component: "PortNavLink", props: { text: "Docs", page: "", exclude: ["examples", "api", "changelog"] } },
+      { component: "PortNavLink", props: { text: "Examples", page: "examples" } },
+      { component: "PortNavLink", props: { text: "API", page: "api" } },
+      { component: "PortNavLink", props: { text: "Changelog", page: "changelog" } },
     ],
 
-    sidebar: {
-      // Unreleased ports: a one-page sidebar, so the language switcher is there to get back
-      ...Object.fromEntries(
-        PORTS.filter((p) => !p.released).map((p) => [p.docs, [{ text: p.name, items: [{ text: "Coming soon", link: p.docs }] }]])
-      ),
-      "/js/": [
-        {
-          text: "Getting started",
-          items: [
-            { text: "Introduction", link: "/js/" },
-            { text: "Installation", link: "/js/installation" },
-            { text: "Usage", link: "/js/usage" },
-            { text: "Censoring", link: "/js/censoring" },
-            { text: "Examples", link: "/js/examples" },
-          ],
-        },
-        {
-          text: "Reference",
-          items: [
-            { text: "API", link: "/js/api" },
-            { text: "How matching works", link: "/js/how-it-works" },
-            { text: "The lexicon", link: "/js/lexicon" },
-          ],
-        },
-        {
-          text: "More",
-          items: [
-            { text: "Limitations", link: "/js/limitations" },
-            { text: "FAQ", link: "/js/faq" },
-            { text: "Contributing", link: "/js/contributing" },
-            { text: "Changelog", link: "/js/changelog" },
-          ],
-        },
-      ],
-    },
+    sidebar: Object.fromEntries(
+      PORTS.map((p) => [
+        p.docs,
+        p.released
+          ? DOC_PAGES.map((g) => ({ ...g, items: g.items.map((item) => ({ ...item, link: p.docs + item.link })) }))
+          : // Unreleased ports: a one-page sidebar, so the language switcher is there to get back.
+            [{ text: p.name, items: [{ text: "Coming soon", link: p.docs }] }],
+      ])
+    ),
 
     socialLinks: [{ icon: "github", link: JS_REPO }],
 
