@@ -96,13 +96,13 @@ strict := nepaliprofanity.MustNewFilter(nepaliprofanity.FilterOptions{Strictness
 lenient.ContainsProfanity("you idiot")                  // false
 nepaliprofanity.ContainsProfanity("you idiot")          // true
 
-nepaliprofanity.FindProfanity("terms and conditions")   // []string{}
-strict.FindProfanity("terms and conditions")            // []string{"conditions"}
+nepaliprofanity.FindProfanity("damn it")   // []string{}
+strict.FindProfanity("damn it")            // []string{"damn"}
 ```
 
 ::: warning
-`Strict` flags some ordinary words and names, like `conditions`, `Randip` and `Kandel`. Don't use it to
-automatically reject text.
+`Strict` still flags a few ordinary words, like `damn` and `prick`. Names and
+words its stems would hit, like `Randip` and `conditions`, are on a built-in allow list.
 :::
 
 ## Reuse a filter

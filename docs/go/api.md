@@ -23,6 +23,8 @@ The package-level functions check all three languages at the standard level. For
 type FilterOptions struct {
 	Languages  []Language   // nil: all three. An empty, non-nil slice: none.
 	Strictness Strictness   // "": Standard
+	ExtraWords []string     // more words to flag
+	AllowWords []string     // words never to flag
 }
 
 type Language string     // English, Romanized, Devanagari
@@ -62,7 +64,7 @@ Sets how much is caught. Each level includes everything from the levels below it
 |---|---|
 | `Lenient` | Severe profanity and slurs only. |
 | `Standard` (default) | Milder insults: `idiot`, `stupid`, `murkha`, `sala`, `kutta`, `sasto manche`… |
-| `Strict` | Stems that also start ordinary words or names: `rand`, `cond`, `kand`, `lund`. Catches more inflected forms, but flags words like `Randip`, `conditions` and `Kandel`. |
+| `Strict` | Words and stems that are also ordinary words: `damn`, `cum`, `prick`, and the stems `rand`, `cond`, `kand` and `lund`. The names and words those stems would hit most, like `Randip`, `conditions` and `Kandel`, are on a built-in allow list and stay clean. |
 
 ```go
 lenient := nepaliprofanity.MustNewFilter(nepaliprofanity.FilterOptions{Strictness: nepaliprofanity.Lenient})
@@ -70,12 +72,29 @@ strict := nepaliprofanity.MustNewFilter(nepaliprofanity.FilterOptions{Strictness
 
 lenient.ContainsProfanity("you idiot")                  // false
 nepaliprofanity.ContainsProfanity("you idiot")          // true
-nepaliprofanity.FindProfanity("terms and conditions")   // []string{}
-strict.FindProfanity("terms and conditions")            // []string{"conditions"}
+nepaliprofanity.FindProfanity("damn it")                // []string{}
+strict.FindProfanity("damn it")                         // []string{"damn"}
+strict.FindProfanity("Randip read the conditions")      // []string{}
 ```
 
-Use `Strict` only when a human reviews what gets flagged, for example as a moderation queue rather than as an
-automatic block.
+`Strict` still catches a few ordinary words, like *damn* and *prick*. Use it where that's the policy you want, or in
+a moderation queue that a person reviews.
+
+### `ExtraWords` and `AllowWords`
+
+Adds words to flag and words never to flag. Extra words count at every strictness and are matched like the built-in
+ones, so leetspeak, stretched letters and postpositions are still caught. Allowed words are never flagged, with or
+without a postposition, which is how to keep a name on your site from matching a stem.
+
+```go
+filter := nepaliprofanity.MustNewFilter(nepaliprofanity.FilterOptions{
+	ExtraWords: []string{"spammer"},
+	AllowWords: []string{"idiot"},
+})
+
+filter.FindProfanity("sp4mmerko link")   // []string{"spammerko"}
+filter.FindProfanity("idiot muji")       // []string{"muji"}
+```
 
 `NewFilter` returns an error for an unknown language or strictness, and `MustNewFilter` panics.
 
@@ -280,14 +299,18 @@ type LexiconEntry struct {
 | `Words` | Whole token, after normalization. A trailing postposition is removed first. |
 | `Stems` | The token starts with the stem. For example, `fuck` catches `fucking`. |
 | `Phrases` | Words in sequence, separated by any whitespace. |
+| `Infixes` | Anywhere inside a Latin token, so `fuck` catches `dumbfuck`. Only roots no ordinary word contains are here. |
 
 **Flat lists.** These `[]string` lists hold every entry in one script, at every strictness:
 
-- `LatinWords`, `LatinStems` and `LatinPhrases` cover English and Romanized Nepali.
+- `LatinWords`, `LatinStems`, `LatinPhrases` and `LatinInfixes` cover English and Romanized Nepali.
+- `Allowed` holds the ordinary words and names that are never flagged, like `Randip`, `Shitij` and `Scunthorpe`.
 - `DevanagariWords`, `DevanagariStems` and `DevanagariPhrases` cover Devanagari.
 
 **Postpositions.** `LatinSuffixes` (`ko`, `lai`, `haru`…) and `DevanagariSuffixes` (`को`, `लाई`, `हरू`…) are removed
 before the whole-word check. They apply at every language and strictness setting.
 
 A filter builds its lookup tables from these lists when it's created, so changing them afterwards has no effect, and
-changing them at all isn't supported. To change the lists, see [The lexicon](./lexicon.md).
+changing them at all isn't supported. To flag or allow words for your app only, use the
+[`ExtraWords` and `AllowWords` options](#extrawords-and-allowwords). To change the lists for everyone, see
+[The lexicon](./lexicon.md).

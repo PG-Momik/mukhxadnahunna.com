@@ -9,7 +9,7 @@ import censoredMp4 from "../media/comment-censored.mp4";
 import censoredWebm from "../media/comment-censored.webm";
 import censoredPoster from "../media/comment-censored-poster.jpg";
 
-import { check } from "no-nepali-profanity";
+import { check, type Strictness } from "no-nepali-profanity";
 import { GITHUB, PORTS } from "../languages";
 
 /*
@@ -167,15 +167,17 @@ const samples = [
   { label: "Romanized Nepali", text: "yo khatey payment app kahiley chaley po" },
   { label: "Devanagari", text: "मुजीको क्लास, कहिल्यै नआउनु" },
   { label: "English, leetspeak", text: "Great lecture, but the lab was sh1t." },
-  { label: "Symbols", text: "this restro is @ss" },
+  { label: "Symbols", text: "this restro is @ss, sh!tf@ce owner" },
+  { label: "x for chh", text: "xakka jasto kura nagar" },
   { label: "Spelled out", text: "F.U.C.K this assignment" },
   { label: "A real name", text: "Randip Thapa explained it really well" },
 ];
 
 const active = ref<number | null>(0);
 const mode = ref<"detect" | "censor">("censor");
+const strictness = ref<Strictness>("strict");
 const text = ref(samples[0].text);
-const result = computed(() => check(text.value));
+const result = computed(() => check(text.value, { strictness: strictness.value }));
 
 function pickSample(i: number) {
   active.value = i;
@@ -208,9 +210,7 @@ const outputSegments = computed(() => {
     })
     .filter((seg) => seg.t);
 });
-const call = computed(() =>
-  mode.value === "censor" ? "check(text).censor()" : "check(text).words"
-);
+const call = computed(() => "check(text, { strictness })" + (mode.value === "censor" ? ".censor()" : ".words"));
 
 const snippets = [
   {
@@ -263,10 +263,10 @@ const dodges = ["sh1t", "sh!t", "f*ck", "fuuuuck", "f.u.c.k", "ＦＵＣＫ"];
 const grammar = ["mujiko", "gedaharu", "मुजीको", "गेडाहरू"];
 const names = ["Shitij", "Kshitij", "Randip", "Kandel", "Putali", "Asha"];
 
-const levels = [
-  { name: "Lenient", text: "Severe profanity and slurs only." },
-  { name: "Standard", text: "Adds milder insults like idiot, murkha and sala. The default." },
-  { name: "Strict", text: "Adds word stems that can also match names. For review queues." },
+const levels: { name: string; value: Strictness; text: string }[] = [
+  { name: "Lenient", value: "lenient", text: "Severe profanity and slurs only." },
+  { name: "Standard", value: "standard", text: "Adds milder insults like idiot, murkha and sala. The default." },
+  { name: "Strict", value: "strict", text: "Adds words and stems that can also be ordinary words, like damn. Known names stay allowed." },
 ];
 const level = ref(1);
 
@@ -406,6 +406,22 @@ const ports = PORTS.map((p) => ({
                 {{ s.label }}
               </button>
             </div>
+            <div class="demo-level">
+              <span class="demo-level-label" id="demo-level-label">Strictness</span>
+              <div class="segmented" role="group" aria-labelledby="demo-level-label">
+                <button
+                  v-for="l in levels"
+                  :key="l.value"
+                  type="button"
+                  :title="l.text"
+                  :aria-pressed="strictness === l.value"
+                  :class="{ 'is-active': strictness === l.value }"
+                  @click="strictness = l.value"
+                >
+                  {{ l.name }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="demo-body">
@@ -449,8 +465,8 @@ const ports = PORTS.map((p) => ({
     <!-- Stats -->
     <section class="stats">
       <div class="wrap stats-grid">
-        <div><p class="stat">280+</p><p class="stat-label">words, stems and phrases</p></div>
-        <div><p class="stat">5.5 KB</p><p class="stat-label">gzipped</p></div>
+        <div><p class="stat">400+</p><p class="stat-label">words, stems and phrases</p></div>
+        <div><p class="stat">8 KB</p><p class="stat-label">gzipped</p></div>
         <div><p class="stat">0</p><p class="stat-label">dependencies</p></div>
       </div>
     </section>
@@ -954,8 +970,24 @@ button:focus-visible,
   overflow: hidden;
 }
 .demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   padding: 16px;
   border-bottom: 1px solid var(--mx-hairline);
+}
+.demo-bar .demo-samples {
+  flex: 1;
+}
+.demo-level {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+.demo-level-label {
+  font-size: 13px;
+  color: var(--mx-text-2);
 }
 .demo-out-head {
   display: flex;
@@ -965,7 +997,9 @@ button:focus-visible,
   margin: -6px 0 12px;
 }
 .demo-out-head .demo-label {
+  min-width: 0;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 .demo-out-head .segmented {
   background: var(--mx-hairline);
@@ -1543,6 +1577,14 @@ button:focus-visible,
   .install-sizer > code,
   .install-face {
     font-size: 12px;
+  }
+  .demo-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .demo-level {
+    justify-content: space-between;
   }
   .demo-body {
     grid-template-columns: 1fr;

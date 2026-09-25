@@ -12,7 +12,7 @@
 |---|---|
 | Lenient | Severe profanity, sexual terms and slurs. |
 | Standard | Milder insults that some sites allow, like `idiot`, `murkha`, `sala` and `sasto manche`. |
-| Strict | Entries that are offensive but also match ordinary words or names. For example, the stem `rand` also matches *Randip*, and `cond` matches *conditions*. |
+| Strict | Entries that are offensive but are also ordinary words, like `damn` and `prick`, and stems that start ordinary words or names, like `rand` and `cond`. The names and words those stems hit most, like *Randip* and *conditions*, are on a built-in allow list. |
 
 A filter set to one level uses the entries at that level and every level below it.
 

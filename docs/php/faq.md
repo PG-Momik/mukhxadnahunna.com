@@ -24,27 +24,26 @@ Escape the rest of the text first if it goes into HTML. See
 
 ## Can I add my own words?
 
-Not at runtime. The word lists are built into the package. To add words for everyone, see
-[Contributing](./contributing.md). To add words only for your app, run your own check alongside the filter:
+Yes. Pass `extraWords` to flag more words, and `allowWords` to never flag a word, such as a name on your site:
 
 ```php
 use NoNepaliProfanity\Profanity;
 
-function isBlocked(string $text): bool
-{
-    $extra = ['someword', 'anotherword'];
-    $words = preg_split('/\s+/u', mb_strtolower($text), -1, PREG_SPLIT_NO_EMPTY);
-    return Profanity::containsProfanity($text) || array_intersect($words, $extra) !== [];
-}
+$filter = Profanity::createFilter(['extraWords' => ['someword'], 'allowWords' => ['somename']]);
+
+$filter->containsProfanity('s0mew0rd');   // true
 ```
+
+Extra words are matched like the built-in ones, so leetspeak, stretched letters and postpositions are still caught.
+To add words for everyone, see [Contributing](./contributing.md).
 
 ## Why was this word flagged?
 
 Run the text through `findProfanity` to see which word matched, and `tokenize` to see the words the filter checked:
 
 ```php
-Profanity::findProfanity('terms and conditions', ['strictness' => 'strict']);   // ['conditions']
-Profanity::tokenize('terms and conditions');                                    // ['terms', 'and', 'conditions']
+Profanity::findProfanity('damn it', ['strictness' => 'strict']);   // ['damn']
+Profanity::tokenize('damn it');                                    // ['damn', 'it']
 ```
 
 If an ordinary word or a name is flagged at `'standard'` or `'lenient'`, please
@@ -66,7 +65,7 @@ If it isn't there, [suggest it](./contributing.md).
 ## Which strictness should I use?
 
 Use the default, `'standard'`, for most sites. Use `'lenient'` if mild insults are fine in your community. Use
-`'strict'` only when a person reviews what gets flagged, because it catches some ordinary words and names. See
+`'strict'` only when a person reviews what gets flagged, because it catches a few ordinary words, like *damn*. See
 [Block severe words, review the rest](./examples.md#block-severe-words-review-the-rest).
 
 ## Does it work with Laravel, Symfony or WordPress?

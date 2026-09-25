@@ -18,23 +18,24 @@ Yes. Use the positions from `findProfanityMatches` to build a `TextSpan`. See
 
 ## Can I add my own words?
 
-Not at runtime. The word lists are built into the package. To add words for everyone, see
-[Contributing](./contributing.md). To add words only for your app, run your own check alongside the filter:
+Yes. Pass `extraWords` to flag more words, and `allowWords` to never flag a word, such as a name on your site:
 
 ```dart
-const extra = {'someword', 'anotherword'};
+final filter = ProfanityFilter(extraWords: ['someword'], allowWords: ['somename']);
 
-bool isBlocked(String text) =>
-    containsProfanity(text) || text.toLowerCase().split(RegExp(r'\s+')).any(extra.contains);
+filter.containsProfanity('s0mew0rd');   // true
 ```
+
+Extra words are matched like the built-in ones, so leetspeak, stretched letters and postpositions are still caught.
+To add words for everyone, see [Contributing](./contributing.md).
 
 ## Why was this word flagged?
 
 Run the text through `findProfanity` to see which word matched, and `tokenize` to see the words the filter checked:
 
 ```dart
-findProfanity('terms and conditions', strictness: Strictness.strict);   // ['conditions']
-tokenize('terms and conditions');                                       // ['terms', 'and', 'conditions']
+findProfanity('damn it', strictness: Strictness.strict);   // ['damn']
+tokenize('damn it');                                       // ['damn', 'it']
 ```
 
 If an ordinary word or a name is flagged at the standard or lenient level, please
@@ -54,8 +55,8 @@ If it isn't there, [suggest it](./contributing.md).
 ## Which strictness should I use?
 
 Use the default, `Strictness.standard`, for most apps. Use `Strictness.lenient` if mild insults are fine in your
-community. Use `Strictness.strict` only when a person reviews what gets flagged, because it catches some ordinary
-words and names. See [Block severe words, review the rest](./examples.md#block-severe-words-review-the-rest).
+community. Use `Strictness.strict` only when a person reviews what gets flagged, because it catches a few ordinary
+words, like *damn*. See [Block severe words, review the rest](./examples.md#block-severe-words-review-the-rest).
 
 ## Is checking in the app enough?
 

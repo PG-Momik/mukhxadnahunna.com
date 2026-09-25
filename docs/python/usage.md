@@ -92,13 +92,13 @@ find_profanity("fuck muji मुजी", {"languages": ["romanized", "devanagari
 contains_profanity("you idiot", {"strictness": "lenient"})         # False
 contains_profanity("you idiot")                                    # True
 
-find_profanity("terms and conditions")                             # []
-find_profanity("terms and conditions", {"strictness": "strict"})   # ["conditions"]
+find_profanity("damn it")                             # []
+find_profanity("damn it", {"strictness": "strict"})   # ["damn"]
 ```
 
 ::: warning
-`"strict"` flags some ordinary words and names, like `conditions`, `Randip` and `Kandel`. Don't use it to
-automatically reject text.
+`"strict"` still flags a few ordinary words, like `damn` and `prick`. Names and
+words its stems would hit, like `Randip` and `conditions`, are on a built-in allow list.
 :::
 
 ## Reuse a filter

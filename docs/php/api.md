@@ -17,6 +17,8 @@ optional `$options` array:
 [
     'languages' => ['english', 'romanized', 'devanagari'],   // default: all three
     'strictness' => 'standard',                              // 'lenient', 'standard' or 'strict'
+    'extraWords' => [],                                      // more words to flag
+    'allowWords' => [],                                      // words never to flag
 ]
 ```
 
@@ -45,17 +47,31 @@ Sets how much is caught. Each level includes everything from the levels below it
 |---|---|
 | `'lenient'` | Severe profanity and slurs only. |
 | `'standard'` (default) | Milder insults: `idiot`, `stupid`, `murkha`, `sala`, `kutta`, `sasto manche`… |
-| `'strict'` | Stems that also start ordinary words or names: `rand`, `cond`, `kand`, `lund`. Catches more inflected forms, but flags words like `Randip`, `conditions` and `Kandel`. |
+| `'strict'` | Words and stems that are also ordinary words: `damn`, `cum`, `prick`, and the stems `rand`, `cond`, `kand` and `lund`. The names and words those stems would hit most, like `Randip`, `conditions` and `Kandel`, are on a built-in allow list and stay clean. |
 
 ```php
 Profanity::containsProfanity('you idiot', ['strictness' => 'lenient']);        // false
 Profanity::containsProfanity('you idiot');                                     // true
-Profanity::findProfanity('terms and conditions');                              // []
-Profanity::findProfanity('terms and conditions', ['strictness' => 'strict']);  // ['conditions']
+Profanity::findProfanity('damn it');                                           // []
+Profanity::findProfanity('damn it', ['strictness' => 'strict']);               // ['damn']
+Profanity::findProfanity('Randip read the conditions', ['strictness' => 'strict']);  // []
 ```
 
-Use `'strict'` only when a human reviews what gets flagged, for example as a moderation queue rather than as an
-automatic block.
+`'strict'` still catches a few ordinary words, like *damn* and *prick*. Use it where that's the policy you want, or
+in a moderation queue that a person reviews.
+
+### `extraWords` and `allowWords`
+
+Adds words to flag and words never to flag. Extra words count at every strictness and are matched like the built-in
+ones, so leetspeak, stretched letters and postpositions are still caught. Allowed words are never flagged, with or
+without a postposition, which is how to keep a name on your site from matching a stem.
+
+```php
+$filter = Profanity::createFilter(['extraWords' => ['spammer'], 'allowWords' => ['idiot']]);
+
+$filter->findProfanity('sp4mmerko link');   // ['spammerko']
+$filter->findProfanity('idiot muji');       // ['muji']
+```
 
 An unknown language or strictness throws an `InvalidArgumentException`.
 
@@ -265,6 +281,7 @@ A class holding the word lists as constants.
 | `Lexicon::WORDS` | Whole token, after normalization. A trailing postposition is removed first. |
 | `Lexicon::STEMS` | The token starts with the stem. For example, `fuck` catches `fucking`. |
 | `Lexicon::PHRASES` | Words in sequence, separated by any whitespace. |
+| `Lexicon::INFIXES` | Anywhere inside a Latin token, so `fuck` catches `dumbfuck`. Only roots no ordinary word contains are here. |
 
 ```php
 array_filter(Lexicon::WORDS, fn ($e) => $e['language'] === 'romanized' && $e['strictness'] === 'standard');
@@ -272,11 +289,13 @@ array_filter(Lexicon::WORDS, fn ($e) => $e['language'] === 'romanized' && $e['st
 
 **Flat lists.** These methods return every entry in one script, at every strictness, as a list of strings:
 
-- `Lexicon::latinWords()`, `latinStems()` and `latinPhrases()` cover English and Romanized Nepali.
+- `Lexicon::latinWords()`, `latinStems()`, `latinPhrases()` and `latinInfixes()` cover English and Romanized Nepali.
+- `Lexicon::ALLOWED` holds the ordinary words and names that are never flagged, like `Randip`, `Shitij` and `Scunthorpe`.
 - `Lexicon::devanagariWords()`, `devanagariStems()` and `devanagariPhrases()` cover Devanagari.
 
 **Postpositions.** `Lexicon::LATIN_SUFFIXES` (`ko`, `lai`, `haru`…) and `Lexicon::DEVANAGARI_SUFFIXES` (`को`, `लाई`,
 `हरू`…) are removed before the whole-word check. They apply at every language and strictness setting.
 
-The matcher builds its lookup tables from these lists, so you can't add your own words at runtime. To change the
-lists, see [The lexicon](./lexicon.md).
+The matcher builds its lookup tables from these lists. To flag or allow words for your app only, use the
+[`extraWords` and `allowWords` options](#extrawords-and-allowwords). To change the lists for everyone, see
+[The lexicon](./lexicon.md).

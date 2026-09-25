@@ -29,6 +29,8 @@ optional `options` object:
 interface FilterOptions {
   languages?: readonly Language[];   // default: all three
   strictness?: Strictness;           // default: "standard"
+  extraWords?: readonly string[];    // more words to flag
+  allowWords?: readonly string[];    // words never to flag
 }
 
 type Language = "english" | "romanized" | "devanagari";
@@ -60,17 +62,31 @@ Sets how much is caught. Each level includes everything from the levels below it
 |---|---|
 | `"lenient"` | Severe profanity and slurs only. |
 | `"standard"` (default) | Milder insults: `idiot`, `stupid`, `murkha`, `sala`, `kutta`, `sasto manche`… |
-| `"strict"` | Stems that also start ordinary words or names: `rand`, `cond`, `kand`, `lund`. Catches more inflected forms, but flags words like `Randip`, `conditions` and `Kandel`. |
+| `"strict"` | Words and stems that are also ordinary words: `damn`, `cum`, `prick`, and the stems `rand`, `cond`, `kand` and `lund`. The names and words those stems would hit most, like `Randip`, `conditions` and `Kandel`, are on a built-in allow list and stay clean. |
 
 ```js
 containsProfanity("you idiot", { strictness: "lenient" });        // false
 containsProfanity("you idiot");                                   // true
-findProfanity("terms and conditions");                            // []
-findProfanity("terms and conditions", { strictness: "strict" });  // ["conditions"]
+findProfanity("damn it");                                         // []
+findProfanity("damn it", { strictness: "strict" });               // ["damn"]
+findProfanity("Randip read the conditions", { strictness: "strict" });  // []
 ```
 
-Use `"strict"` only when a human reviews what gets flagged, for example as a moderation queue rather than as an
-automatic block.
+`"strict"` still catches a few ordinary words, like *damn* and *prick*. Use it where that's the policy you want, or
+in a moderation queue that a person reviews.
+
+### `extraWords` and `allowWords`
+
+Adds words to flag and words never to flag. Extra words count at every strictness and are matched like the built-in
+ones, so leetspeak, stretched letters and postpositions are still caught. Allowed words are never flagged, with or
+without a postposition, which is how to keep a name on your site from matching a stem.
+
+```js
+const filter = createFilter({ extraWords: ["spammer"], allowWords: ["idiot"] });
+
+filter.findProfanity("sp4mmerko link");   // ["spammerko"]
+filter.findProfanity("idiot muji");       // ["muji"]
+```
 
 An unknown language or strictness throws a `TypeError`.
 
@@ -284,6 +300,7 @@ interface LexiconEntry {
 | `WORDS` | Whole token, after normalization. A trailing postposition is removed first. |
 | `STEMS` | The token starts with the stem. For example, `fuck` catches `fucking`. |
 | `PHRASES` | Words in sequence, separated by any whitespace. |
+| `INFIXES` | Anywhere inside a Latin token, so `fuck` catches `dumbfuck`. Only roots no ordinary word contains are here. |
 
 ```js
 import { lexicon } from "no-nepali-profanity";
@@ -293,11 +310,13 @@ lexicon.WORDS.filter((e) => e.language === "romanized" && e.strictness === "stan
 
 **Flat lists.** These `readonly string[]` lists hold every entry in one script, at every strictness:
 
-- `LATIN_WORDS`, `LATIN_STEMS` and `LATIN_PHRASES` cover English and Romanized Nepali.
+- `LATIN_WORDS`, `LATIN_STEMS`, `LATIN_PHRASES` and `LATIN_INFIXES` cover English and Romanized Nepali.
+- `ALLOWED` holds the ordinary words and names that are never flagged, like `Randip`, `Shitij` and `Scunthorpe`.
 - `DEVANAGARI_WORDS`, `DEVANAGARI_STEMS` and `DEVANAGARI_PHRASES` cover Devanagari.
 
 **Postpositions.** `LATIN_SUFFIXES` (`ko`, `lai`, `haru`…) and `DEVANAGARI_SUFFIXES` (`को`, `लाई`, `हरू`…) are removed
 before the whole-word check. They apply at every language and strictness setting.
 
-The matcher builds its lookup tables from these lists, so you can't add your own words at runtime. To change the
-lists, see [The lexicon](./lexicon.md).
+The matcher builds its lookup tables from these lists. To flag or allow words for your app only, use the
+[`extraWords` and `allowWords` options](#extrawords-and-allowwords). To change the lists for everyone, see
+[The lexicon](./lexicon.md).

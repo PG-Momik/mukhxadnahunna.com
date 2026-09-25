@@ -4,10 +4,11 @@ meaning.
 ## By design
 
 - **Short words match exactly.** `as`, `class`, `assignment` and `Assam` are never flagged.
-- **Names win over coverage.** Words that are also names or the start of names, like `shit` in *Shitij*, are only
-  matched as whole words. Some dodged spellings get through as a result.
-- **Risky stems are opt-in.** Stems that hit ordinary words, like `rand` → *Randip* and `cond` → *conditions*, only
-  run at the strict level. See [Options](./api.md#options).
+- **Names win over coverage.** A stem that starts a name, like `shit` in *Shitij*, only works because the name is on
+  the allow list. A name that starts with a stem and isn't on the list can be flagged. Add it with the allow-words
+  option. See [Options](./api.md#options).
+- **Risky entries are opt-in.** Words that are also ordinary words, like `damn` and `prick`, and stems that start
+  many ordinary words, like `rand` and `cond`, only run at the strict level.
 - **No everyday words, caste names, surnames or context-only insults.** A word list can't tell a slur from someone's
   name, or an insult from a description.
 - **Censoring masks whole words.** A match is masked from its first character to its last, including a glued-on
@@ -20,7 +21,8 @@ meaning.
 
 ## Strict mode
 
-At the strict level, `Randip`, `conditions`, `conductor`, `kanda`, `Kandel` and `Lundberg` are flagged. That's
-expected at that level.
+At the strict level, ordinary words like `damn`, `prick` and `hoe`, and words that start with `rand`, `cond`, `kand` or
+`lund`, are flagged. The common names and words among them, like `Randip`, `random`, `conditions`, `conductor`,
+`Kandel` and `Lundberg`, are on the allow list and stay clean.
 
 If you hit a false positive, please open an issue with the exact input.

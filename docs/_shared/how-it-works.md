@@ -1,6 +1,8 @@
 The filter works on words, not on raw substrings. Checking raw substrings would flag `class` for containing `ass`, and
 `Scunthorpe` for containing `cunt`. Instead, the filter normalizes the text, splits it into tokens, and checks each
-token against the word lists. It then checks the whole text for phrases.
+token against the word lists. It then checks the whole text for phrases. Only a handful of roots that no ordinary word
+contains, like `fuck`, are looked for inside words, and a built-in allow list keeps the known exceptions, like
+`Scunthorpe`, clean.
 
 Every port follows these steps exactly, so a piece of text gets the same result in every language.
 
@@ -20,8 +22,10 @@ Latin text is normalized as follows:
 |---|---|
 | Unicode NFKC, which turns full-width letters into plain ones | `ＩＤＩＯＴ` → `IDIOT` |
 | Lowercase | `IDIOT` → `idiot` |
+| Remove accents | `fück` → `fuck` |
 | Remove zero-width characters | `mu​ji` → `muji` |
-| Decode leetspeak: `0 1 3 4 5 7 @ $` → `o i e a s t a s` | `sh1t` → `shit`, `@ss` → `ass` |
+| Replace Cyrillic and Greek look-alike letters with Latin ones | `fuсk` (Cyrillic `с`) → `fuck` |
+| Decode leetspeak: `0 1 3 4 5 7 8 9 @ $ €` → `o i e a s t b g a s e` | `sh1t` → `shit`, `@ss` → `ass`, `ni99er` → `nigger` |
 | Replace `!` between two letters with `i` | `b!tch` → `bitch`, but `teacher!` is unchanged |
 
 Devanagari text is normalized as follows:
@@ -42,23 +46,35 @@ A run of three or more single-letter tokens is joined into one. That catches `f 
 
 Devanagari tokens are kept whole.
 
+Latin letters split only by `.`, `-`, `_`, `~`, `'` or `` ` `` are also read joined, so `sh.it` and `fu-ck` are caught.
+That's tried only when none of the pieces matched on its own, one piece is three letters or fewer, and the joined word
+is at most 12 letters, so an email address like `shital.shrestha@…` isn't read as one word.
+
 ## 3. Match each token
 
 For a **Latin** token, the filter first tries the token as it is. If the token ends in a Latin postposition (`ko`,
-`lai`, `haru`…), it also tries the token with the postposition removed, as long as at least three letters remain. A
-candidate matches if any of these checks passes:
+`lai`, `haru`…), it also tries the token with the postposition removed, as long as at least three letters remain.
+
+If either candidate is on the allow list, like `Randip` or `Randipko`, the token is clean. Otherwise it matches if any
+of these checks passes:
 
 1. **Whole word.** Runs of three or more repeated letters are cut to two, and the result is looked up in the Latin
    word list.
 2. **Stretched word.** All repeated letters are cut to one, and the result is looked up in the word list. This check
    only applies to words of four or more letters, which is why `fuuuuck` matches but `aaass` doesn't.
 3. **Stem.** The collapsed token starts with a Latin stem.
-4. **Wildcard.** If the token contains `*`, each `*` can stand for any one letter, and the token is compared with
+4. **Embedded root.** The token contains one of a few roots that no ordinary word contains, so `dumbfuck` and
+   `sonofabitch` are caught.
+5. **Wildcard.** If the token contains `*`, each `*` can stand for any one letter, and the token is compared with
    every word and stem. A `*` on both ends of a token is markdown emphasis and is removed first, so `*sh*t*` reads as
    `sh*t` and `*is*` stays clean. A `*` on one end only is tried both ways, so `*ss` matches `ass`.
 
 For a **Devanagari** token, the filter also removes one Devanagari postposition (`को`, `लाई`, `हरू`…) if one is
 present. The token matches if it's in the Devanagari word list or starts with a Devanagari stem.
+
+Romanized Nepali entries are compared after one more fold, on both the entry and the token: `chh` and `x` both become
+`x`, since both are written for छ. So `xakka` matches `chhakka`, and `chhod` ("leave") no longer matches the stem
+`chod`.
 
 ## 4. Match phrases
 
@@ -81,4 +97,7 @@ so does a conjunct joined by a virama, so `गाण्ड` becomes `**`.
 Stretched-word matching and stem matching are both prefix or fuzzy checks. Used on short words, they cause false
 positives, so short words are only matched exactly. For example, `ass` is in the word list, but `class`, `assignment`
 and `Assam` aren't flagged because none of them is exactly `ass`. The same reasoning is why `shit` is a whole word
-rather than a stem: the name **Shitij** starts with it.
+rather than a stem.
+
+A stem that starts ordinary words or names only works together with the allow list. `shit` is a stem, so `shitface` is
+caught, and **Shitij**, **Shital** and **Shiite**, which start with it, are on the allow list.

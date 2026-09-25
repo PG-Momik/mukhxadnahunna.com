@@ -16,6 +16,8 @@ same optional named arguments:
 ```dart
 Iterable<Language>? languages,               // default: all three
 Strictness strictness = Strictness.standard,
+Iterable<String> extraWords = const [],      // more words to flag
+Iterable<String> allowWords = const [],      // words never to flag
 
 enum Language { english, romanized, devanagari }
 enum Strictness { lenient, standard, strict }
@@ -46,17 +48,31 @@ Sets how much is caught. Each level includes everything from the levels below it
 |---|---|
 | `Strictness.lenient` | Severe profanity and slurs only. |
 | `Strictness.standard` (default) | Milder insults: `idiot`, `stupid`, `murkha`, `sala`, `kutta`, `sasto manche`… |
-| `Strictness.strict` | Stems that also start ordinary words or names: `rand`, `cond`, `kand`, `lund`. Catches more inflected forms, but flags words like `Randip`, `conditions` and `Kandel`. |
+| `Strictness.strict` | Words and stems that are also ordinary words: `damn`, `cum`, `prick`, and the stems `rand`, `cond`, `kand` and `lund`. The names and words those stems would hit most, like `Randip`, `conditions` and `Kandel`, are on a built-in allow list and stay clean. |
 
 ```dart
 containsProfanity('you idiot', strictness: Strictness.lenient);        // false
 containsProfanity('you idiot');                                        // true
-findProfanity('terms and conditions');                                 // []
-findProfanity('terms and conditions', strictness: Strictness.strict);  // ['conditions']
+findProfanity('damn it');                                              // []
+findProfanity('damn it', strictness: Strictness.strict);               // ['damn']
+findProfanity('Randip read the conditions', strictness: Strictness.strict);  // []
 ```
 
-Use `Strictness.strict` only when a human reviews what gets flagged, for example as a moderation queue rather than
-as an automatic block.
+`Strictness.strict` still catches a few ordinary words, like *damn* and *prick*. Use it where that's the policy you
+want, or in a moderation queue that a person reviews.
+
+### `extraWords` and `allowWords`
+
+Adds words to flag and words never to flag. Extra words count at every strictness and are matched like the built-in
+ones, so leetspeak, stretched letters and postpositions are still caught. Allowed words are never flagged, with or
+without a postposition, which is how to keep a name on your site from matching a stem.
+
+```dart
+final filter = ProfanityFilter(extraWords: ['spammer'], allowWords: ['idiot']);
+
+filter.findProfanity('sp4mmerko link');   // ['spammerko']
+filter.findProfanity('idiot muji');       // ['muji']
+```
 
 ## `check`
 
@@ -271,6 +287,7 @@ class LexiconEntry {
 | `lexicon.words` | Whole token, after normalization. A trailing postposition is removed first. |
 | `lexicon.stems` | The token starts with the stem. For example, `fuck` catches `fucking`. |
 | `lexicon.phrases` | Words in sequence, separated by any whitespace. |
+| `lexicon.infixes` | Anywhere inside a Latin token, so `fuck` catches `dumbfuck`. Only roots no ordinary word contains are here. |
 
 ```dart
 lexicon.words.where((e) => e.language == Language.romanized && e.strictness == Strictness.standard);
@@ -278,11 +295,13 @@ lexicon.words.where((e) => e.language == Language.romanized && e.strictness == S
 
 **Flat lists.** These `List<String>` lists hold every entry in one script, at every strictness:
 
-- `latinWords`, `latinStems` and `latinPhrases` cover English and Romanized Nepali.
+- `latinWords`, `latinStems`, `latinPhrases` and `latinInfixes` cover English and Romanized Nepali.
+- `allowed` holds the ordinary words and names that are never flagged, like `Randip`, `Shitij` and `Scunthorpe`.
 - `devanagariWords`, `devanagariStems` and `devanagariPhrases` cover Devanagari.
 
 **Postpositions.** `latinSuffixes` (`ko`, `lai`, `haru`…) and `devanagariSuffixes` (`को`, `लाई`, `हरू`…) are removed
 before the whole-word check. They apply at every language and strictness setting.
 
-The matcher builds its lookup tables from these lists, so you can't add your own words at runtime. To change the
-lists, see [The lexicon](./lexicon.md).
+The matcher builds its lookup tables from these lists. To flag or allow words for your app only, use the
+[`extraWords` and `allowWords` options](#extrawords-and-allowwords). To change the lists for everyone, see
+[The lexicon](./lexicon.md).

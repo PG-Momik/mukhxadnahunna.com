@@ -23,18 +23,18 @@ Escape the rest of the text first if it goes into HTML.
 
 ## Can I add my own words?
 
-Not at runtime. The word lists are built into the package. To add words for everyone, see
-[Contributing](./contributing.md). To add words only for your app, run your own check alongside the filter:
+Yes. Pass `extraWords` to flag more words, and `allowWords` to never flag a word, such as a name on your site:
 
 ```js
-import { containsProfanity } from "no-nepali-profanity";
+import { createFilter } from "no-nepali-profanity";
 
-const extra = new Set(["someword", "anotherword"]);
+const filter = createFilter({ extraWords: ["someword"], allowWords: ["somename"] });
 
-function isBlocked(text) {
-  return containsProfanity(text) || text.toLowerCase().split(/\s+/).some((w) => extra.has(w));
-}
+filter.containsProfanity("s0mew0rd");   // true
 ```
+
+Extra words are matched like the built-in ones, so leetspeak, stretched letters and postpositions are still caught.
+To add words for everyone, see [Contributing](./contributing.md).
 
 ## Why was this word flagged?
 
@@ -43,8 +43,8 @@ Run the text through `findProfanity` to see which word matched, and `tokenize` t
 ```js
 import { findProfanity, tokenize } from "no-nepali-profanity";
 
-findProfanity("terms and conditions", { strictness: "strict" });   // ["conditions"]
-tokenize("terms and conditions");                                  // ["terms", "and", "conditions"]
+findProfanity("damn it", { strictness: "strict" });   // ["damn"]
+tokenize("damn it");                                  // ["damn", "it"]
 ```
 
 If an ordinary word or a name is flagged at `"standard"` or `"lenient"`, please
@@ -66,7 +66,7 @@ If it isn't there, [suggest it](./contributing.md).
 ## Which strictness should I use?
 
 Use the default, `"standard"`, for most sites. Use `"lenient"` if mild insults are fine in your community. Use
-`"strict"` only when a person reviews what gets flagged, because it catches some ordinary words and names. See
+`"strict"` only when a person reviews what gets flagged, because it catches a few ordinary words, like *damn*. See
 [Block severe words, review the rest](./examples.md#block-severe-words-review-the-rest).
 
 ## Does it work in the browser?

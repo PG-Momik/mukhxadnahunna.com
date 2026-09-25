@@ -1,9 +1,5 @@
 # Installation
 
-::: warning Pre-release
-`no_nepali_profanity` isn't published to pub.dev yet. The commands below will work once the first version is released.
-:::
-
 ## Install the package
 
 ::: code-group

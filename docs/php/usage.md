@@ -88,13 +88,13 @@ Profanity::findProfanity('fuck muji मुजी', ['languages' => ['romanized',
 Profanity::containsProfanity('you idiot', ['strictness' => 'lenient']);         // false
 Profanity::containsProfanity('you idiot');                                      // true
 
-Profanity::findProfanity('terms and conditions');                               // []
-Profanity::findProfanity('terms and conditions', ['strictness' => 'strict']);   // ['conditions']
+Profanity::findProfanity('damn it');                               // []
+Profanity::findProfanity('damn it', ['strictness' => 'strict']);   // ['damn']
 ```
 
 ::: warning
-`'strict'` flags some ordinary words and names, like `conditions`, `Randip` and `Kandel`. Don't use it to
-automatically reject text.
+`'strict'` still flags a few ordinary words, like `damn` and `prick`. Names and
+words its stems would hit, like `Randip` and `conditions`, are on a built-in allow list.
 :::
 
 ## Reuse a filter

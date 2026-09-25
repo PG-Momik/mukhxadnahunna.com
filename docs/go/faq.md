@@ -19,24 +19,19 @@ text first if it goes into HTML. See
 
 ## Can I add my own words?
 
-Not at runtime. The word lists are built into the package. To add words for everyone, see
-[Contributing](./contributing.md). To add words only for your app, run your own check alongside the filter:
+Yes. Set `ExtraWords` to flag more words, and `AllowWords` to never flag a word, such as a name on your site:
 
 ```go
-var extra = map[string]bool{"someword": true, "anotherword": true}
+filter := nepaliprofanity.MustNewFilter(nepaliprofanity.FilterOptions{
+	ExtraWords: []string{"someword"},
+	AllowWords: []string{"somename"},
+})
 
-func isBlocked(text string) bool {
-	if nepaliprofanity.ContainsProfanity(text) {
-		return true
-	}
-	for _, w := range strings.Fields(strings.ToLower(text)) {
-		if extra[w] {
-			return true
-		}
-	}
-	return false
-}
+filter.ContainsProfanity("s0mew0rd")   // true
 ```
+
+Extra words are matched like the built-in ones, so leetspeak, stretched letters and postpositions are still caught.
+To add words for everyone, see [Contributing](./contributing.md).
 
 ## Why was this word flagged?
 
@@ -45,8 +40,8 @@ Run the text through `FindProfanity` to see which word matched, and `Tokenize` t
 ```go
 strict := nepaliprofanity.MustNewFilter(nepaliprofanity.FilterOptions{Strictness: nepaliprofanity.Strict})
 
-strict.FindProfanity("terms and conditions")               // []string{"conditions"}
-nepaliprofanity.Tokenize("terms and conditions")           // []string{"terms", "and", "conditions"}
+strict.FindProfanity("damn it")               // []string{"damn"}
+nepaliprofanity.Tokenize("damn it")           // []string{"damn", "it"}
 ```
 
 If an ordinary word or a name is flagged at `Standard` or `Lenient`, please
@@ -69,7 +64,7 @@ If it isn't there, [suggest it](./contributing.md).
 ## Which strictness should I use?
 
 Use the default, `Standard`, for most sites. Use `Lenient` if mild insults are fine in your community. Use `Strict`
-only when a person reviews what gets flagged, because it catches some ordinary words and names. See
+only when a person reviews what gets flagged, because it catches a few ordinary words, like *damn*. See
 [Block severe words, review the rest](./examples.md#block-severe-words-review-the-rest).
 
 ## Is it fast?

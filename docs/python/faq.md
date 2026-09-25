@@ -24,17 +24,18 @@ Escape the rest of the text first if it goes into HTML. See
 
 ## Can I add my own words?
 
-Not at runtime. The word lists are built into the package. To add words for everyone, see
-[Contributing](./contributing.md). To add words only for your app, run your own check alongside the filter:
+Yes. Pass `extra_words` to flag more words, and `allow_words` to never flag a word, such as a name on your site:
 
 ```py
-from no_nepali_profanity import contains_profanity
+from no_nepali_profanity import create_filter
 
-extra = {"someword", "anotherword"}
+profanity_filter = create_filter({"extra_words": ["someword"], "allow_words": ["somename"]})
 
-def is_blocked(text: str) -> bool:
-    return contains_profanity(text) or any(w in extra for w in text.lower().split())
+profanity_filter.contains_profanity("s0mew0rd")   # True
 ```
+
+Extra words are matched like the built-in ones, so leetspeak, stretched letters and postpositions are still caught.
+To add words for everyone, see [Contributing](./contributing.md).
 
 ## Why was this word flagged?
 
@@ -43,8 +44,8 @@ Run the text through `find_profanity` to see which word matched, and `tokenize` 
 ```py
 from no_nepali_profanity import find_profanity, tokenize
 
-find_profanity("terms and conditions", {"strictness": "strict"})   # ["conditions"]
-tokenize("terms and conditions")                                   # ["terms", "and", "conditions"]
+find_profanity("damn it", {"strictness": "strict"})   # ["damn"]
+tokenize("damn it")                                   # ["damn", "it"]
 ```
 
 If an ordinary word or a name is flagged at `"standard"` or `"lenient"`, please
@@ -66,7 +67,7 @@ If it isn't there, [suggest it](./contributing.md).
 ## Which strictness should I use?
 
 Use the default, `"standard"`, for most sites. Use `"lenient"` if mild insults are fine in your community. Use
-`"strict"` only when a person reviews what gets flagged, because it catches some ordinary words and names. See
+`"strict"` only when a person reviews what gets flagged, because it catches a few ordinary words, like *damn*. See
 [Block severe words, review the rest](./examples.md#block-severe-words-review-the-rest).
 
 ## Is it fast?
