@@ -1,7 +1,14 @@
 # mukhxadnahunna.com
 
-Documentation site for the `no-nepali-profanity` packages, built with [VitePress](https://vitepress.dev) and hosted on
-GitHub Pages at <https://mukhxadnahunna.com>.
+Documentation site for `no-nepali-profanity`, a profanity filter for English, Romanized Nepali and Devanagari, with
+packages for JavaScript, Python, Go, PHP and Dart. Built with [VitePress](https://vitepress.dev).
+
+**Live at [mukhxadnahunna.com](https://mukhxadnahunna.com)**
+
+| Blocks it | Censors it |
+|---|---|
+| ![A course review with profanity is rejected before it's posted](.github/media/comment-blocked.gif) | ![A reply is posted with the profanity masked](.github/media/comment-censored.gif) |
+| Use it as form validation: reject abusive input before it's submitted. | Or censor on the client: mask the abuse and let the post through. |
 
 ## Structure
 
@@ -49,6 +56,12 @@ To replace them:
    `docs/.vitepress/theme/media/`, holding the last frame for 1.5 seconds so the result can be read. The landing
    page imports them from there, so each build gives them content-hashed file names and a new recording always
    gets a new URL.
+4. Regenerate the GIFs at the top of this README from the new MP4s:
+   ```sh
+   for n in comment-blocked comment-censored; do
+     ffmpeg -y -i docs/.vitepress/theme/media/$n.mp4 -vf "fps=12,scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" -loop 0 .github/media/$n.gif
+   done
+   ```
 
 The labels and captions are in `HERO_VIDEOS` at the top of `docs/.vitepress/theme/components/Landing.vue`. Visitors
 who have reduced motion turned on get paused videos with controls instead of autoplay.
@@ -61,20 +74,3 @@ npm run docs:dev       # dev server with hot reload
 npm run docs:build     # production build in docs/.vitepress/dist
 npm run docs:preview   # serve the production build
 ```
-
-## Deploying
-
-`.github/workflows/deploy.yml` builds and deploys the site on every push to `main`.
-
-One-time setup:
-
-1. Push this repository to GitHub.
-2. In **Settings → Pages**, set **Source** to **GitHub Actions**.
-3. At your DNS provider, point the domain at GitHub Pages:
-   - Four `A` records for `mukhxadnahunna.com`: `185.199.108.153`, `185.199.109.153`, `185.199.110.153`,
-     `185.199.111.153`.
-   - A `CNAME` record for `www` pointing to `<your-github-username>.github.io`.
-4. In **Settings → Pages**, enter `mukhxadnahunna.com` as the custom domain. Once the certificate is issued, turn on
-   **Enforce HTTPS**.
-
-The repository links used in the site are set at the top of `docs/.vitepress/config.mts`.
