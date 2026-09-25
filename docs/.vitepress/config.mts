@@ -1,8 +1,6 @@
 import { defineConfig } from "vitepress";
 import { DOC_PAGES, PORTS } from "./theme/languages";
 
-// Update these when the repositories are created or renamed.
-const JS_REPO = "https://github.com/PG-Momik/no-nepali-profanity";
 const SITE_REPO = "https://github.com/PG-Momik/mukhxadnahunna.com";
 
 export default defineConfig({
@@ -58,7 +56,7 @@ export default defineConfig({
       ])
     ),
 
-    socialLinks: [{ icon: "github", link: JS_REPO }],
+    socialLinks: [{ icon: "github", link: SITE_REPO }],
 
     editLink: {
       pattern: `${SITE_REPO}/edit/main/docs/:path`,
