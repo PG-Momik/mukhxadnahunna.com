@@ -1,9 +1,5 @@
 # Installation
 
-::: warning Pre-release
-`no-nepali-profanity` isn't published to PyPI yet. The commands below will work once the first version is released.
-:::
-
 ## Install the package
 
 ::: code-group

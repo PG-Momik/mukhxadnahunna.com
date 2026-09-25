@@ -1,10 +1,5 @@
 # Installation
 
-::: warning Pre-release
-`pg-momik/no-nepali-profanity` isn't published to Packagist yet. The command below will work once the first version
-is released.
-:::
-
 ## Install the package
 
 ```sh

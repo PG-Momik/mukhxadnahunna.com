@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-09-25)
 
 First release, with the same word lists and matching rules as the JavaScript package 0.1.0.
 

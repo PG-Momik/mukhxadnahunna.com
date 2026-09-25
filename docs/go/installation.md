@@ -1,9 +1,5 @@
 # Installation
 
-::: warning Pre-release
-`no-nepali-profanity-go` has no tagged release yet. The command below will work once the first version is released.
-:::
-
 ## Install the module
 
 ```sh
