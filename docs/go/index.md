@@ -1,26 +1,29 @@
----
-title: Go
-outline: false
----
+# Introduction
 
-# Go
+`no-nepali-profanity-go` is a small profanity filter for Go. It detects and censors profanity in **English**,
+**Romanized Nepali** and **Devanagari Nepali**, plus the Hindi slang common in Nepal.
 
-::: info Coming soon
-The Go port isn't released yet.
-:::
+```go
+import nepaliprofanity "github.com/PG-Momik/no-nepali-profanity-go"
 
-It will be published on Go modules, and installed with:
-
-```sh
-go get github.com/PG-Momik/no-nepali-profanity-go
+nepaliprofanity.ContainsProfanity("Great teacher!")   // false
+nepaliprofanity.ContainsProfanity("मुजीको क्लास")      // true
+nepaliprofanity.FindProfanity("f.u.c.k this sh1t")    // []string{"fuck", "shit"}
+nepaliprofanity.Censor("you muji")                    // "you ****"
+nepaliprofanity.Check("you muji").Censor()            // "you ****"
 ```
 
-The Go port will use the same word lists and matching rules as the JavaScript package, so a piece of text
-gets the same result in every language. That covers detecting and censoring, the language and strictness options,
-and the checks that keep real names from being flagged.
+<!--@include: ../_shared/why.md-->
+- **One small dependency.** Only `golang.org/x/text`, for Unicode normalization. Filters are safe for concurrent use.
 
-## Until then
+## What it isn't
 
-- The [JavaScript package](/js/) is available now.
-- To help build the Go port, see [Contributing](/js/contributing), or open an issue on
-  [GitHub](https://github.com/PG-Momik/no-nepali-profanity/issues).
+- **It doesn't understand meaning.** Insults without a listed word, sarcasm and context are out of scope. Treat it
+  as a first-pass filter, and send anything that matters to a human moderator.
+
+## Next steps
+
+- [Install the package](./installation.md)
+- [Learn the basics](./usage.md)
+- [Censor text](./censoring.md)
+- [See examples for real apps](./examples.md)
