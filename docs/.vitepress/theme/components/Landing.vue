@@ -9,7 +9,7 @@ import censoredMp4 from "../media/comment-censored.mp4";
 import censoredWebm from "../media/comment-censored.webm";
 import censoredPoster from "../media/comment-censored-poster.jpg";
 
-const GITHUB = "https://github.com/PG-Momik/no-nepali-profanity";
+import { GITHUB, PORTS } from "../languages";
 
 /*
  * Hero videos, recorded from the demo apps and encoded into ../media/ (see "Hero video" in the README). They play
@@ -65,24 +65,8 @@ function trackProgress() {
   progressFrame = requestAnimationFrame(trackProgress);
 }
 
-/*
- * Install commands for each port, shown on the faces of a rolling cube. Only JavaScript exists so far. The
- * Composer vendor and the Go module path are placeholders until those repos exist.
- */
-// The hero's "Get started" and "GitHub" buttons link to the language on screen. Until a port has its own `docs`
-// and `repo`, they fall back to the ports section and the JavaScript repo.
-const INSTALLS: { lang: string; cmd: string; docs?: string; repo?: string }[] = [
-  {
-    lang: "JS",
-    cmd: "npm install no-nepali-profanity",
-    docs: "/js/",
-    repo: GITHUB,
-  },
-  { lang: "Python", cmd: "pip install no-nepali-profanity" },
-  { lang: "Go", cmd: "go get github.com/PG-Momik/no-nepali-profanity-go" },
-  { lang: "PHP", cmd: "composer require pg-momik/no-nepali-profanity" },
-  { lang: "Flutter", cmd: "flutter pub add no_nepali_profanity" },
-];
+// The ports, shown as the landing page's tabs, rolling install commands and buttons (see ../languages.ts).
+const INSTALLS = PORTS.map((p) => ({ lang: p.label, cmd: p.install, docs: p.docs, repo: p.repo }));
 
 // The commands sit on the faces of a prism that rolls around its horizontal axis: one face per language, each
 // 34px tall, so the prism's shape follows the length of INSTALLS.
@@ -101,7 +85,8 @@ const rollPaused = ref(false);
 // Once the visitor picks a language, the cube stays on it.
 const picked = ref(false);
 const shown = computed(() => INSTALLS[noteFace.value]);
-const startLink = computed(() => shown.value.docs ?? "/#ports");
+// "Get started" opens the port's docs, or its "coming soon" page; "GitHub" falls back to the JavaScript repo.
+const startLink = computed(() => shown.value.docs);
 const repoLink = computed(() => shown.value.repo ?? GITHUB);
 
 function pickLanguage(i: number) {
@@ -249,13 +234,13 @@ const levels = [
 ];
 const level = ref(1);
 
-const ports = [
-  { name: "JavaScript & TypeScript", pkg: "npm", status: "Pre-release", href: "/js/" },
-  { name: "Python", pkg: "PyPI", status: "Planned" },
-  { name: "PHP & Laravel", pkg: "Packagist", status: "Planned" },
-  { name: "Go", pkg: "Go modules", status: "Planned" },
-  { name: "Flutter & Dart", pkg: "pub.dev", status: "Planned" },
-];
+const ports = PORTS.map((p) => ({
+  name: p.name,
+  pkg: p.registry,
+  status: p.released ? "Pre-release" : "Planned",
+  released: p.released,
+  href: p.docs,
+}));
 </script>
 
 <template>
@@ -539,7 +524,7 @@ const ports = [
           >
             <p class="port-name">{{ p.name }}</p>
             <p class="port-pkg">{{ p.pkg }}</p>
-            <span class="tag" :class="p.href ? 'tag-live' : 'tag-muted'">{{ p.status }}</span>
+            <span class="tag" :class="p.released ? 'tag-live' : 'tag-muted'">{{ p.status }}</span>
           </component>
         </div>
       </div>
@@ -603,6 +588,26 @@ const ports = [
 }
 
 /* Hero */
+/*
+ * A faint dot grid behind the hero, fading out towards the edges, so the video frame reads as sitting on top of
+ * the page instead of blending into it.
+ */
+.hero {
+  position: relative;
+  isolation: isolate;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(var(--mx-dot) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 75% 85% at 50% 35%, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 75% 85% at 50% 35%, #000 35%, transparent 100%);
+  pointer-events: none;
+}
 .hero {
   padding: 88px 0 96px;
 }

@@ -1,4 +1,5 @@
 import { defineConfig } from "vitepress";
+import { PORTS } from "./theme/languages";
 
 // Update these when the repositories are created or renamed.
 const JS_REPO = "https://github.com/PG-Momik/no-nepali-profanity";
@@ -8,6 +9,8 @@ export default defineConfig({
   title: "mukh-xadna-hunna",
   description: "Profanity filtering for Nepali text: English, Romanized Nepali and Devanagari.",
   lang: "en-US",
+  // Dark by default; visitors can still switch to light with the toggle, and their choice is remembered.
+  appearance: "dark",
   cleanUrls: true,
   lastUpdated: true,
   sitemap: { hostname: "https://mukhxadnahunna.com" },
@@ -43,6 +46,10 @@ export default defineConfig({
     ],
 
     sidebar: {
+      // Unreleased ports: a one-page sidebar, so the language switcher is there to get back
+      ...Object.fromEntries(
+        PORTS.filter((p) => !p.released).map((p) => [p.docs, [{ text: p.name, items: [{ text: "Coming soon", link: p.docs }] }]])
+      ),
       "/js/": [
         {
           text: "Getting started",

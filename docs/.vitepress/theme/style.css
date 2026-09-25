@@ -16,6 +16,8 @@
   --mx-hairline: rgba(0, 0, 0, 0.08);
   /* The hero video's frame: strong enough to separate a light video from a light page */
   --mx-screen-border: rgba(0, 0, 0, 0.2);
+  /* Dots of the hero's background texture */
+  --mx-dot: rgba(0, 0, 0, 0.13);
   --mx-card: #ffffff;
 
   /* Accents, from the flag of Nepal */
@@ -47,6 +49,7 @@
   --mx-text-3: #86868b;
   --mx-hairline: rgba(255, 255, 255, 0.1);
   --mx-screen-border: rgba(255, 255, 255, 0.18);
+  --mx-dot: rgba(255, 255, 255, 0.12);
   --mx-card: #1c1c1e;
 
   --mx-blue: #6f9bff;

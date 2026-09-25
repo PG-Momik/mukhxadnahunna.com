@@ -13,8 +13,16 @@ docs/
   .vitepress/config.mts   nav, sidebar and repository links
 ```
 
-To add a port (for example PHP), create `docs/php/`, add a sidebar entry under `"/php/"` in `config.mts`, and update
-the table and nav on the landing page.
+The ports are listed once, in `docs/.vitepress/theme/languages.ts`. The landing page (language tabs, rolling
+install command, buttons, ports section) and the language switcher in the nav bar all read from it. Each unreleased
+port has a "coming soon" page at `docs/<port>/index.md`.
+
+To release a port (for example PHP):
+
+1. Replace `docs/php/index.md` with the real docs, using the same page names as `docs/js/` (`usage.md`, `api.md`…),
+   so the switcher keeps readers on the same page when they change language.
+2. Add a sidebar for `"/php/"` in `config.mts`.
+3. In `languages.ts`, set `released: true` and add the port's `repo`.
 
 ## Hero video
 
