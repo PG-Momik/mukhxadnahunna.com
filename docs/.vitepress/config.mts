@@ -25,15 +25,23 @@ export default defineConfig({
       },
     ],
     ["meta", { name: "theme-color", content: "#ffffff" }],
+    // Link previews on LinkedIn, Slack, X and others. og:image must be an absolute URL.
     ["meta", { property: "og:type", content: "website" }],
-    ["meta", { property: "og:title", content: "mukh-xadna-hunna" }],
+    ["meta", { property: "og:site_name", content: "mukh-xadna-hunna" }],
+    ["meta", { property: "og:url", content: "https://mukhxadnahunna.com/" }],
+    ["meta", { property: "og:title", content: "Nepali profanity filter to keep it civil." }],
     [
       "meta",
       {
         property: "og:description",
-        content: "Profanity filtering for Nepali text: English, Romanized Nepali and Devanagari.",
+        content: "Detect and censor abuse in English, Romanized Nepali and Devanagari. For JS, Python, Go, PHP and Flutter.",
       },
     ],
+    ["meta", { property: "og:image", content: "https://mukhxadnahunna.com/og.png" }],
+    ["meta", { property: "og:image:width", content: "1200" }],
+    ["meta", { property: "og:image:height", content: "627" }],
+    ["meta", { property: "og:image:alt", content: "Nepali profanity filter to keep it civil." }],
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
   ],
 
   themeConfig: {
