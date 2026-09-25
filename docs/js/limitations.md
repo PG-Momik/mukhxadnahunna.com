@@ -17,15 +17,10 @@ meaning.
 - **No semantic understanding.** A phrase like "you are a disgrace", written without any listed word, isn't caught.
 - **Mixed scripts inside one word aren't handled.** A word that switches between Latin and Devanagari letters won't
   match either list.
+- **A `*` on both ends of a word is read as markdown emphasis**, so `*is*` stays clean but `*ss*` isn't caught. A `*`
+  on one end only is also tried as a hidden letter, so `*ss` is caught, and so is a lone `*and` (`gand`).
 
-## Known issues
-
-These are real gaps in the current version.
-
-| Input | Result | Expected | Cause |
-|---|---|---|---|
-| `that *ss` | `[]` | `["*ss"]` | A leading `*` is removed as markdown emphasis before the wildcard check. |
-| `थुक्क` | `[]` | caught | Only `थुक` is listed. |
+## Strict mode
 
 At `strictness: "strict"`, `Randip`, `conditions`, `conductor`, `kanda`, `Kandel` and `Lundberg` are flagged. That's
 expected at that level.
