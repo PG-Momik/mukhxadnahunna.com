@@ -119,9 +119,38 @@ onBeforeUnmount(() => {
 });
 
 // "Get started" scrolls down to the ports, and puts #stacks in the address bar so the spot can be linked to.
+// The scroll is animated here rather than with scrollIntoView({ behavior: "smooth" }), which browsers turn into
+// a jump when their own smooth-scrolling setting is off. Visitors who ask for reduced motion get the jump.
+const SCROLL_MS = 700;
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+
 function scrollToStacks() {
-  document.getElementById("stacks")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
+  const el = document.getElementById("stacks");
+  if (!el) return;
   history.replaceState(history.state, "", "#stacks");
+  const navHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--vp-nav-height")) || 64;
+  const from = window.scrollY;
+  const to = Math.max(0, el.getBoundingClientRect().top + from - navHeight);
+  if (reducedMotion || Math.abs(to - from) < 2) {
+    window.scrollTo(0, to);
+    return;
+  }
+
+  // Stop if the visitor starts scrolling themselves.
+  let cancelled = false;
+  const cancel = () => (cancelled = true);
+  const events = ["wheel", "touchstart", "keydown", "mousedown"] as const;
+  events.forEach((e) => window.addEventListener(e, cancel, { once: true, passive: true }));
+
+  const start = performance.now();
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / SCROLL_MS);
+    if (cancelled) return;
+    window.scrollTo(0, from + (to - from) * easeInOutCubic(t));
+    if (t < 1) requestAnimationFrame(step);
+    else events.forEach((e) => window.removeEventListener(e, cancel));
+  };
+  requestAnimationFrame(step);
 }
 
 const copied = ref(false);
@@ -273,7 +302,8 @@ const ports = PORTS.map((p) => ({
           </button>
         </div>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#stacks" @click.prevent="scrollToStacks">Get started</a>
+          <!-- vp-raw: VitePress's router would otherwise catch the click first and jump without animating -->
+          <a class="btn btn-primary vp-raw" href="#stacks" @click.prevent="scrollToStacks">Get started</a>
           <a class="btn-link" :href="repoLink" target="_blank" rel="noopener">
             GitHub <span aria-hidden="true">›</span>
           </a>
