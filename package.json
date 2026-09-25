@@ -11,6 +11,6 @@
     "vitepress": "^1.6.4"
   },
   "dependencies": {
-    "no-nepali-profanity": "^0.1.0"
+    "no-nepali-profanity": "^0.2.0"
   }
 }

@@ -168,7 +168,6 @@ const samples = [
   { label: "Devanagari", text: "मुजीको क्लास, कहिल्यै नआउनु" },
   { label: "English, leetspeak", text: "Great lecture, but the lab was sh1t." },
   { label: "Symbols", text: "this restro is @ss, sh!tf@ce owner" },
-  { label: "x for chh", text: "xakka jasto kura nagar" },
   { label: "Spelled out", text: "F.U.C.K this assignment" },
   { label: "A real name", text: "Randip Thapa explained it really well" },
 ];
@@ -187,6 +186,8 @@ function pickSample(i: number) {
 function onType() {
   if (active.value !== null && text.value !== samples[active.value].text) active.value = null;
 }
+// While the box isn't focused, a drawn caret blinks at the end of the text to show it can be typed in.
+const focused = ref(false);
 
 // Splits the output into plain text and matches, so matches can be styled. The library merges overlapping matches
 // before calling replace, so each one arrives once; private-use characters mark where it starts and ends.
@@ -427,17 +428,24 @@ const ports = PORTS.map((p) => ({
           <div class="demo-body">
             <div class="demo-pane">
               <label class="demo-label" for="demo-input">Comment <span class="demo-hint">Edit it, or type your own</span></label>
-              <textarea
-                id="demo-input"
-                v-model="text"
-                class="demo-text demo-input"
-                rows="3"
-                maxlength="500"
-                spellcheck="false"
-                autocomplete="off"
-                placeholder="Type a comment in English, Romanized Nepali or Devanagari…"
-                @input="onType"
-              ></textarea>
+              <div class="demo-editor" :class="{ 'is-focused': focused }">
+                <textarea
+                  id="demo-input"
+                  v-model="text"
+                  class="demo-text demo-input"
+                  rows="1"
+                  maxlength="500"
+                  spellcheck="false"
+                  autocomplete="off"
+                  placeholder="Type a comment in English, Romanized Nepali or Devanagari…"
+                  @input="onType"
+                  @focus="focused = true"
+                  @blur="focused = false"
+                ></textarea>
+                <!-- The same text in the same place, invisible except for the caret after it. It also sets the height,
+                     so the box grows with the text. -->
+                <div class="demo-text demo-mirror" aria-hidden="true">{{ text }}<span class="caret"></span></div>
+              </div>
             </div>
             <div class="demo-pane demo-pane-out">
               <div class="demo-out-head">
@@ -1096,19 +1104,30 @@ button:focus-visible,
 .demo-output {
   white-space: pre-wrap;
 }
-.demo-input {
-  display: block;
-  width: 100%;
+.demo-editor {
+  display: grid;
+}
+.demo-input,
+.demo-mirror {
+  grid-area: 1 / 1;
   min-height: calc(3 * 1.45em);
   padding: 0;
   border: 0;
-  resize: none;
-  field-sizing: content; /* grows with the text where supported */
-  background: transparent;
-  color: var(--mx-text);
   font: inherit;
   font-size: 22px;
   line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.demo-input {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  resize: none;
+  background: transparent;
+  color: var(--mx-text);
   outline: none;
 }
 .demo-input::placeholder {
@@ -1116,6 +1135,27 @@ button:focus-visible,
 }
 .demo-pane:has(.demo-input:focus-visible) {
   box-shadow: inset 0 0 0 2px var(--mx-blue);
+}
+.demo-mirror {
+  color: transparent;
+  pointer-events: none;
+}
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: var(--mx-blue);
+  animation: caret-blink 1.1s steps(1) infinite;
+}
+.demo-editor.is-focused .caret {
+  visibility: hidden;
+}
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
 }
 .demo-hint {
   margin-left: 6px;
