@@ -85,8 +85,7 @@ const rollPaused = ref(false);
 // Once the visitor picks a language, the cube stays on it.
 const picked = ref(false);
 const shown = computed(() => INSTALLS[noteFace.value]);
-// "Get started" opens the port's docs, or its "coming soon" page; "GitHub" falls back to the JavaScript repo.
-const startLink = computed(() => shown.value.docs);
+// "GitHub" opens the selected port's repo, falling back to the JavaScript repo.
 const repoLink = computed(() => shown.value.repo ?? GITHUB);
 
 function pickLanguage(i: number) {
@@ -118,6 +117,12 @@ onBeforeUnmount(() => {
   clearInterval(rollTimer);
   cancelAnimationFrame(progressFrame);
 });
+
+// "Get started" scrolls down to the ports, and puts #stacks in the address bar so the spot can be linked to.
+function scrollToStacks() {
+  document.getElementById("stacks")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
+  history.replaceState(history.state, "", "#stacks");
+}
 
 const copied = ref(false);
 async function copyInstall() {
@@ -268,7 +273,7 @@ const ports = PORTS.map((p) => ({
           </button>
         </div>
         <div class="hero-actions">
-          <a class="btn btn-primary" :href="startLink">Get started</a>
+          <a class="btn btn-primary" href="#stacks" @click.prevent="scrollToStacks">Get started</a>
           <a class="btn-link" :href="repoLink" target="_blank" rel="noopener">
             GitHub <span aria-hidden="true">›</span>
           </a>
@@ -512,7 +517,7 @@ const ports = PORTS.map((p) => ({
     </section>
 
     <!-- Ports -->
-    <section class="section section-alt">
+    <section id="stacks" class="section section-alt">
       <div class="wrap">
         <h2 class="section-title">One lexicon. Every stack.</h2>
         <p class="section-sub">Each port shares the same word lists and matching rules, so a comment gets the same result in every language.</p>
@@ -1298,6 +1303,9 @@ button:focus-visible,
   margin: 4px 0 20px;
   font-size: 14px;
   color: var(--mx-text-2);
+}
+#stacks {
+  scroll-margin-top: var(--vp-nav-height, 64px);
 }
 .port .tag {
   margin-top: auto;
