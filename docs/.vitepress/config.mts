@@ -68,8 +68,8 @@ export default defineConfig({
     search: { provider: "local" },
 
     footer: {
-      message: "Released under the MIT License.",
-      copyright: "© PG-Momik",
+      message: 'Built with purpose by <a href="https://momik.dev" target="_blank" rel="noopener">Momik Shrestha</a>.',
+      copyright: "Released under the MIT License.",
     },
   },
 });

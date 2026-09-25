@@ -237,7 +237,6 @@ const level = ref(1);
 const ports = PORTS.map((p) => ({
   name: p.name,
   pkg: p.registry,
-  status: p.released ? "Pre-release" : "Planned",
   released: p.released,
   href: p.docs,
 }));
@@ -296,7 +295,13 @@ const ports = PORTS.map((p) => ({
               ><span class="install-prompt" aria-hidden="true">$</span><span class="install-cmd">{{ c.cmd }}</span></code>
             </div>
           </div>
-          <button class="install-copy" type="button" :aria-label="copied ? 'Copied' : 'Copy install command'" @click="copyInstall">
+          <button
+            class="install-copy"
+            type="button"
+            :aria-label="copied ? 'Copied' : `Copy: ${INSTALLS[face].cmd}`"
+            :title="copied ? 'Copied' : `Copy: ${INSTALLS[face].cmd}`"
+            @click="copyInstall"
+          >
             <svg v-if="!copied" viewBox="0 0 20 20" aria-hidden="true"><rect x="6.5" y="6.5" width="10" height="10" rx="2.5" /><path d="M13.5 6.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6.5a2 2 0 0 0 2 2h1.5" /></svg>
             <svg v-else viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8" /></svg>
           </button>
@@ -407,7 +412,6 @@ const ports = PORTS.map((p) => ({
     <!-- Stats -->
     <section class="stats">
       <div class="wrap stats-grid">
-        <div><p class="stat">3</p><p class="stat-label">scripts in one pass</p></div>
         <div><p class="stat">280+</p><p class="stat-label">words, stems and phrases</p></div>
         <div><p class="stat">5.5 KB</p><p class="stat-label">gzipped</p></div>
         <div><p class="stat">0</p><p class="stat-label">dependencies</p></div>
@@ -524,7 +528,7 @@ const ports = PORTS.map((p) => ({
           >
             <p class="port-name">{{ p.name }}</p>
             <p class="port-pkg">{{ p.pkg }}</p>
-            <span class="tag" :class="p.released ? 'tag-live' : 'tag-muted'">{{ p.status }}</span>
+            <span v-if="!p.released" class="tag tag-muted">Planned</span>
           </component>
         </div>
       </div>
@@ -563,7 +567,7 @@ const ports = PORTS.map((p) => ({
         </nav>
       </div>
       <div class="wrap footer-legal">
-        <p>Released under the MIT License. © 2026 PG-Momik.</p>
+        <p>Built with purpose by <a href="https://momik.dev" target="_blank" rel="noopener">Momik Shrestha</a>. Released under the MIT License.</p>
       </div>
     </footer>
   </div>
@@ -1045,7 +1049,7 @@ button:focus-visible,
 }
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   text-align: center;
 }
@@ -1348,6 +1352,14 @@ button:focus-visible,
   color: var(--mx-text-3);
   font-size: 13px;
 }
+.footer-legal a {
+  color: var(--mx-text-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.footer-legal a:hover {
+  color: var(--mx-text);
+}
 
 /* Stack the hero before the video gets smaller than it would be stacked */
 @media (max-width: 1240px) {
@@ -1410,11 +1422,10 @@ button:focus-visible,
     min-height: 0;
   }
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    row-gap: 32px;
+    gap: 12px;
   }
   .stat {
-    font-size: 34px;
+    font-size: 28px;
   }
   .section {
     padding: 80px 0;
